@@ -13,7 +13,7 @@ This feature makes it easy to extend the bot without need to touch its underlyin
 In this project the term modular means that any family of bot commands (sorted into cogs) can be enabled or disabled 
 on the go, or even completely removed without any impact on the bot! New families of commands can easily be developed 
 and added by anyone, as long as they follow the common cog structure. No fear of breaking the whole bot since 
-the commands are isolated in their respective cogs!
+the commands are isolated into their respective cogs!
 
 
 ## Setup
@@ -44,7 +44,7 @@ Managing cogs through the bot commands happens with following command:
 `!extension <operation> <cog_name>` (command prefix can vary from default settings)
 
 `<cog_name>` is dot separated name of the cog like in regular Python imports. Currently it is supported to leave the 
-ending `_cog` out from the name. For example cog `discord_cog.py` can be loaded with commands 
+ending `_cog` out from the name. For example cog `discord_cog.py` can be loaded with commands  
 `!extension load cogs.discord_cog` and `!extension load cogs.discord`. 
 
 `<operation>` is one of the following operations:
