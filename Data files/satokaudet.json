@@ -5,7 +5,7 @@
             "peruna",
             "punajuuri",
             "valkokaali",
-			"punakaali",
+            "punakaali",
             "porkkana",
             "salaatti"
         ],
@@ -24,7 +24,7 @@
     "2": {
         "kotimaiset": [
             "valkokaali",
-			"punakaali",
+            "punakaali",
             "sipuli",
             "peruna",
             "lanttu",
@@ -34,7 +34,7 @@
             "fenkoli",
             "endiivi",
             "parsakaali",
-			"kukkakaali",
+            "kukkakaali",
             "jäävuorisalaatti",
             "granaattiomena",
             "avokado",
@@ -51,7 +51,7 @@
     "3": {
         "kotimaiset": [
             "valkokaali",
-			"punakaali",
+            "punakaali",
             "sipuli",
             "yrtit",
             "kurkku",
@@ -88,8 +88,8 @@
             "munakoiso",
             "pinaatti",
             "kiinankaali",
-			"parsakaali",
-			"kukkakaali",
+            "parsakaali",
+            "kukkakaali",
             "jäävuorisalaatti",
             "paprika",
             "bataatti",
@@ -120,7 +120,7 @@
             "munakoiso",
             "bataatti",
             "kukkakaali",
-			"varhaiskaali",
+            "varhaiskaali",
             "varhaisperuna",
             "kesäkurpitsa"
         ]
@@ -129,7 +129,7 @@
         "kotimaiset": [
             "nippusipuli",
             "parsakaali",
-			"kukkakaali",
+            "kukkakaali",
             "paprika",
             "avomaan salaatti",
             "kurkku",
@@ -154,7 +154,7 @@
         "kotimaiset": [
             "herne",
             "varhaisperuna",
-			"varhaisporkkana",
+            "varhaisporkkana",
             "salaatit",
             "avomaan kurkku",
             "chili",
@@ -164,7 +164,7 @@
             "tomaatti",
             "mustikka",
             "parsakaali",
-			"kukkakaali",
+            "kukkakaali",
             "pinaatti"
         ],
         "ulkomaiset": [
@@ -186,14 +186,14 @@
             "peruna",
             "metsäsienet",
             "parsakaali",
-			"kukkakaali",
+            "kukkakaali",
             "chili",
             "paprika",
             "salaatit",
             "omena",
             "mustikka",
             "mustaviinimarja",
-			"punaviinimarja",
+            "punaviinimarja",
             "pinaatti"
         ],
         "ulkomaiset": [
@@ -209,8 +209,8 @@
     "9": {
         "kotimaiset": [
             "lehtikaali",
-			"punakaali",
-			"valkokaali",
+            "punakaali",
+            "valkokaali",
             "lehtiselleri",
             "peruna",
             "omena",
@@ -238,8 +238,8 @@
     "10": {
         "kotimaiset": [
             "lehtikaali",
-			"punakaali",
-			"valkokaali",
+            "punakaali",
+            "valkokaali",
             "purjo",
             "maa-artisokka",
             "palsternakka",
@@ -249,7 +249,7 @@
         ],
         "ulkomaiset": [
             "parsakaali",
-			"ruusukaali",
+            "ruusukaali",
             "kurpitsa",
             "jäävuorisalaatti",
             "ananas",
@@ -261,8 +261,8 @@
     "11": {
         "kotimaiset": [
             "kiinankaali",
-			"kyssäkaali",
-			"ruusukaali",
+            "kyssäkaali",
+            "ruusukaali",
             "purjo",
             "maa-artisokka",
             "palsternakka",
@@ -271,7 +271,7 @@
         "ulkomaiset": [
             "kurpitsa",
             "ruusukaali",
-			"lehtikaali",
+            "lehtikaali",
             "persimoni",
             "päärynä",
             "satsuma",
@@ -282,7 +282,7 @@
     "12": {
         "kotimaiset": [
             "punakaali",
-			"valkokaali",
+            "valkokaali",
             "porkkana",
             "punajuuri",
             "lanttu",

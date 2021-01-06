@@ -1,5 +1,5 @@
 # OsrsHelper lite
-Yet one more repository for OsrsHelper bots, this is the last one I promise. This repository will deprecate both 
+Yet one more repository for OsrsHelper bots, I swear this is the last one. This project will deprecate both 
 [OsrsHelper-rewrite](https://github.com/Visperi/OsrsHelper-rewrite) and 
 [OsrsHelper](https://github.com/Visperi/OsrsHelper) as soon as this one has the most essential commands available.
 
