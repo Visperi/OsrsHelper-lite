@@ -18,16 +18,26 @@ the commands are isolated in their respective cogs!
 
 ## Managing cogs
 Managing cogs through the bot commands happens with following command:
-`!extension <operation> <cog_namespace>`
+`!extension <operation> <cog_name>`
 
 Where `<operation>` is one of the following operations:
-- `reload`
-- `load`
-- `unload`
+- `load`  Loads an extension
+[docs](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=extension#discord.ext.commands.Bot.load_extension)
+- `unload` Unloads an extension
+[docs](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=extension#discord.ext.commands.Bot.unload_extension)
+- `reload` Atomically reloads an extension. Equivalent of calling `unload` and then `load`
+[docs](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=extension#discord.ext.commands.Bot.reload_extension)
 
-### Enabling new cogs
-**Remember to end the cog file name with `_cog.py`**
-### Disabling existing cogs
+These operations makes it possible to update cogs on the go, without a need to restart the whole bot every time.
+
+#### Enabling new cogs
+**Remember to end the cog file name with `_cog.py` so it can be recognized as one**
+1. Implement a new cog
+2. Place it in directory `cogs` if automatic load is wanted on bot startup
+3. Load the cog if bot is already running
+#### Disabling existing cogs
+1. Unload the cog
+2. Delete the cog file if not needed in the future
 
 ## Current status
 - Basic layout and functionality **Done**
@@ -66,9 +76,9 @@ ready to process commands.
 
 
 ## Why more repositories?
-After realising the OsrsHelper-rewrite and MySQL database it needs had way too much work compared to what are the actual 
-needs of this scale project, I completely lost my motivation into developing that project. When I tried to get back 
-into it, I started noticing more and more different kinds of flaws in the project design that I didn't like.
+After realising the OsrsHelper-rewrite and its MySQL database require too much effort compared to what are the actual 
+needs of this scale project, I completely lost my motivation into developing that version. When I tried to get back 
+into it, I started noticing more different kinds of flaws in the project design that I didn't like.
 
 In the last months and years the Discord API and [discord.py](https://discordpy.readthedocs.io/en/latest/) have had 
 rather big and meaningful updates. Many times I have noticed that developing OsrsHelper with very old discord.py 
@@ -76,7 +86,7 @@ rather big and meaningful updates. Many times I have noticed that developing Osr
 new features is a pretty far-fetched dream.
 
 All this lead into a decision to yet again start the bot from scratch, this time with no excessive scalability with 
-relational database nor other things that only add amount of work with no actual benefits.
+relational database nor other things that only adds maintaining effort with no actual benefits.
 
 
 ## Licence
