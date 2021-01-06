@@ -18,14 +18,14 @@ the commands are isolated in their respective cogs!
 
 ## Setup
 #### Requirements
-| Software/Library        | Version |
-|:-----------------------:|:-------:|
-| Python                  | 3.6+    |
-| discord.py              | 1.5.1+  |
-| aiohttp                 | 3.6.3+  |
-| BeautifulSoup           | 4       |
-| numpy                   | any     |
-| tabulate                | xxxxx   |
+| Software/Library        | Version | Documentation                                                  |
+|:-----------------------:|:-------:|:--------------------------------------------------------------:|
+| Python                  | 3.6+    | [Link](https://docs.python.org/3.6/)                           |
+| discord.py              | 1.5.1+  | [Link](https://discordpy.readthedocs.io/en/stable/)            |
+| aiohttp                 | 3.6.3+  | [Link](https://docs.aiohttp.org/en/stable/)                    |
+| BeautifulSoup           | TBA     | [Link](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) |
+| numpy                   | TBA     | [Link](https://numpy.org/doc/stable/)                          |
+| tabulate                | TBA     | [Link](https://pypi.org/project/tabulate/)                     |
 
 Since there is currently no any public invitation link, following steps are also needed:
 1. Create a Discord app for the bot in their [Developer portal](https://discord.com/developers/applications)
@@ -41,9 +41,13 @@ ready to process commands.
 
 ## Managing cogs
 Managing cogs through the bot commands happens with following command:
-`!extension <operation> <cog_name>`
+`!extension <operation> <cog_name>` (command prefix can vary from default settings)
 
-Where `<operation>` is one of the following operations:
+`<cog_name>` is dot separated name of the cog like in regular Python imports. Currently it is supported to leave the 
+ending `_cog` out from the name. For example cog `discord_cog.py` can be loaded with commands 
+`!extension load cogs.discord_cog` and `!extension load cogs.discord`. 
+
+`<operation>` is one of the following operations:
 - `load`  Loads an extension
 [docs](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=extension#discord.ext.commands.Bot.load_extension)
 - `unload` Unloads an extension
@@ -53,12 +57,12 @@ Where `<operation>` is one of the following operations:
 
 These operations makes it possible to update cogs on the go, without a need to restart the whole bot every time.
 
-#### Enabling new cogs
+### Enabling new cogs
 **Remember to end the cog file name with `_cog.py` so it can be recognized as one**
 1. Implement a new cog
 2. Place it in directory `cogs` if automatic load is wanted on bot startup
 3. Load the cog if bot is already running
-#### Disabling existing cogs
+### Disabling existing cogs
 1. Unload the cog
 2. Delete the cog file if not needed in the future
 
