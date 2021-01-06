@@ -35,7 +35,8 @@ In the last months and years the Discord API and [discord.py](https://discordpy.
 rather big and meaningful updates. Many times I have noticed that developing OsrsHelper with very old discord.py 
 (more than 3 years old!) has started encountering more and more often functional problems, and developing any 
 new features is a pretty far-fetched dream.
-This lead into a decision to yet again start the bot from scratch, this time with no excessive scalability with 
+
+All this lead into a decision to yet again start the bot from scratch, this time with no excessive scalability with 
 relational database nor other things that only add amount of work with no actual benefits.
 
 
