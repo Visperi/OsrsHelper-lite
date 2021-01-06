@@ -1,0 +1,9 @@
+.idea/
+venv/
+__pycache__/
+
+test*
+
+Data files/Credentials.json
+Data files/Custom_commands.json
+Data files/drinks.json
