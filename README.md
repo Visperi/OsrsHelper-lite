@@ -16,6 +16,29 @@ and added by anyone, as long as they follow the common cog structure. No fear of
 the commands are isolated in their respective cogs!
 
 
+## Setup
+#### Requirements
+| Software/Library        | Version |
+|:-----------------------:|:-------:|
+| Python                  | 3.6+    |
+| discord.py              | 1.5.1+  |
+| aiohttp                 | 3.6.3+  |
+| BeautifulSoup           | 4       |
+| numpy                   | any     |
+| tabulate                | xxxxx   |
+
+Since there is currently no any public invitation link, following steps are also needed:
+1. Create a Discord app for the bot in their [Developer portal](https://discord.com/developers/applications)
+2. Enable following intents in the bot settings in developer portal
+    1. Presence intent
+    2. Members intent
+3. Set your Discord API keys in file `Data files/credentials.json`
+
+When you meet the requirements and the API keys are set, the bot can be started by running `main.py`. 
+This will initialize the bot and load all cogs in directory `cogs`. The bot should appear online in Discord and is 
+ready to process commands.
+
+
 ## Managing cogs
 Managing cogs through the bot commands happens with following command:
 `!extension <operation> <cog_name>`
@@ -50,29 +73,6 @@ These operations makes it possible to update cogs on the go, without a need to r
     - help cog          **TBD**
     - maintenance cog   **Basics done**
     - osrs cog          **TBD**
-    
-
-## Setup
-#### Requirements
-| Software/Library        | Version |
-|:-----------------------:|:-------:|
-| Python                  | 3.6+    |
-| discord.py              | 1.5.1+  |
-| aiohttp                 | 3.6.3+  |
-| BeautifulSoup           | 4       |
-| numpy                   | any     |
-| tabulate                | xxxxx   |
-
-Since there is currently no any public invitation link, following steps are also needed:
-1. Create a Discord app for the bot in their [Developer portal](https://discord.com/developers/applications)
-2. Enable following intents in the bot settings in developer portal
-    1. Presence intent
-    2. Members intent
-3. Set your Discord API keys in file `Data files/credentials.json`
-
-When you meet the requirements and the API keys are set, the bot can be started by running `main.py`. 
-This will initialize the bot and load all cogs in directory `cogs`. The bot should appear online in Discord and is 
-ready to process commands.
 
 
 ## Why more repositories?
