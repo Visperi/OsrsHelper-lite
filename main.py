@@ -76,7 +76,7 @@ async def start_reminder_loop():
 
 # noinspection PyBroadException
 def run(bot_version: str):
-    with open("Data files/Credentials.json", "r") as credential_file:
+    with open("Data files/credentials.json", "r") as credential_file:
         credential_data = json.load(credential_file)
 
     api_token = credential_data["tokens"][bot_version]

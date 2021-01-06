@@ -4,6 +4,5 @@ __pycache__/
 
 test*
 
-Data files/Credentials.json
-Data files/Custom_commands.json
+Data files/credentials.json
 Data files/drinks.json
