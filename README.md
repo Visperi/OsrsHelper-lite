@@ -2,7 +2,8 @@
 Yet one more repository for OsrsHelper bots, I swear this is the last one. This project will deprecate both 
 [OsrsHelper](https://github.com/Visperi/OsrsHelper) and 
 [OsrsHelper-rewrite](https://github.com/Visperi/OsrsHelper-rewrite) 
-and  as soon as this one has the most essential commands available.
+and  as soon as this one has the most essential commands available. For more detailed reasoning for this, see 
+the end of this document.
 
 One of the main objectives of this project is to make it easier to control the commands. 
 This is achieved by implementing modular structure for the bot commands by using cogs (extensions in discord.py syntax).
