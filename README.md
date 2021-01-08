@@ -2,7 +2,7 @@
 Yet one more repository for OsrsHelper bots, I swear this is the last one. This project will deprecate both 
 [OsrsHelper](https://github.com/Visperi/OsrsHelper) and 
 [OsrsHelper-rewrite](https://github.com/Visperi/OsrsHelper-rewrite) 
-and  as soon as this one has the most essential commands available. For more detailed reasoning for this, see 
+as soon as this one has the most essential commands available. For more detailed reasoning for this, see 
 section [Why more repositories](#Why-more-repositories).
 
 One of the main objectives of this project is to make it easier to control the commands. 
