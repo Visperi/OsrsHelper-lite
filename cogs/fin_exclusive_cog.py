@@ -82,12 +82,17 @@ class FinExclusiveCog(commands.Cog):
         exclusive to Finnish language.
         """
 
+        try:
+            data = await self.covid_parser.get_summarized_data()
+        except ValueError:
+            await ctx.send("Dataa ei ole vielä päivitetty. Yritä hetken kuluttua uudelleen.")
+            return
+
         update_ts = helper_methods.localize_timestamp(self.covid_parser.update_timestamp)
         embed = discord.Embed(title="Koronan tilanne Suomessa")
         embed.set_thumbnail(url=self.covid_parser.corona_icon_url)
         embed.set_footer(text=f"Data päivitetty viimeksi: {update_ts}")
 
-        data = await self.covid_parser.get_summarized_data()
         corona_data = data[0]
         hospital_data = data[1]
 

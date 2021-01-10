@@ -3,7 +3,7 @@ Yet one more repository for OsrsHelper bots, I swear this is the last one. This 
 [OsrsHelper](https://github.com/Visperi/OsrsHelper) and 
 [OsrsHelper-rewrite](https://github.com/Visperi/OsrsHelper-rewrite) 
 as soon as this one has the most essential commands available. For more detailed reasoning for this, see 
-section [Why more repositories](#Why-more-repositories).
+section [Why more repositories](#Why-more-repositories?).
 
 One of the main objectives of this project is to make it easier to control the commands. 
 This is achieved by implementing modular structure for the bot commands by using cogs (extensions in discord.py syntax).
@@ -37,9 +37,10 @@ Since there is currently no any public invitation link, following steps are also
     1. Presence intent
     2. Members intent
 3. Set your Discord API keys in file `Data files/credentials.json`
+    1. Remember to provide the right `EBotVersion` in the bottom line of `main.py`
 
-When you meet the requirements and the API keys are set, the bot can be started by running `main.py`. 
-This will initialize the bot and load all cogs in directory `cogs`. The bot should appear online in Discord and is 
+When you meet the requirements and the API keys are set, start the bot by running `main.py`. 
+This will initialize the bot and load all cogs in directory `cogs`. The bot should appear online in Discord and be 
 ready to process commands.
 
 
