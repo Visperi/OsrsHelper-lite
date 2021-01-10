@@ -73,71 +73,33 @@ class MaintenanceCog(commands.Cog):
     @commands.command(name="id")
     @commands.is_owner()
     async def get_item_id(self, ctx: commands.Context, *, item_name: str):
-        pass
+        raise NotImplementedError
 
     @commands.command(name="check")
     @commands.is_owner()
     async def check_new_items(self, ctx: commands.Context):
         # TODO: Caching???
-        pass
-        # tradeables_file = "Data files/Tradeables.json"
-        # url = "https://rsbuddy.com/exchange/summary.json"
-        #
-        # try:
-        #     resp = await static_functions.make_request(client.aiohttp_session, url)
-        # except asyncio.TimeoutError:
-        #     await message.channel.send("RsBuddy answered too slowly.")
-        #     return
-        #
-        # resp_data = json.loads(resp)
-        # new_items = []
-        #
-        # with open(tradeables_file, "r") as data_file:
-        #     saved_data = json.load(data_file)
-        #
-        # for item in resp_data.values():
-        #     item_id = item["id"]
-        #     item_name = item["name"]
-        #     members = item["members"]
-        #     store_price = item["sp"]
-        #
-        #     if item_name not in saved_data:
-        #         saved_data[item_name] = dict(id=item_id, members=members, store_price=store_price)
-        #         new_items.append(item_name)
-        #
-        # if len(new_items) > 0:
-        #     with open(tradeables_file, "w") as data_file:
-        #         json.dump(saved_data, data_file, indent=4)
-        #
-        #     finish_message = "Added {} new items:\n\n{}".format(len(new_items), "\n".join(new_items))
-        #     if len(finish_message) > 2000:
-        #         finish_message = f"Added {len(new_items)} new items but they do not fit into one Discord message."
-        #
-        # else:
-        #     finish_message = "No new items to add."
-        #
-        # await ctx.send(finish_message)
+        raise NotImplementedError
 
     @commands.command(name="get")
     @commands.is_owner()
     async def get_file(self, ctx: commands.Context, filename: str):
-        print(type(filename))
-        await ctx.send(filename)
+        raise NotImplementedError
 
     @commands.command("managedrinks")
     @commands.is_owner()
     async def manage_drinks(self, ctx: commands.Context):
-        pass
+        raise NotImplementedError
 
     @commands.command("clear")
     @commands.is_owner()
     async def clear_cache(self, ctx: commands.Context, cache_name: str):
-        pass
+        raise NotImplementedError
 
     @commands.command("devcommands")
     @commands.is_owner()
     async def get_maintenance_commands(self, ctx: commands.Context):
-        pass
+        raise NotImplementedError
 
 
 def setup(bot: commands.Bot):

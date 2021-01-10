@@ -62,8 +62,6 @@ class DiscordCog(commands.Cog):
 
     @commands.command(name="info", aliases=["version"])
     async def get_bot_info(self, ctx: commands.Context):
-        with open("Data files/changelog_en.txt", "r", encoding="utf-8") as changelog_file:
-            changelog = changelog_file.read()
 
         appinfo = await self.bot.application_info()
         last_updated = datetime.datetime.fromtimestamp(os.path.getmtime("main.py")).strftime("%Y-%m-%d")
@@ -72,7 +70,7 @@ class DiscordCog(commands.Cog):
                      f"Updated: {last_updated}\n" \
                      f"Source code: Python {platform.python_version()} " \
                      f"([GitHub](https://github.com/Visperi/OsrsHelper))\n" \
-                     f"using discord.py {discord.__version__}\n"
+                     f"Using discord.py {discord.__version__}\n"
         credits_val = "[discord.py](https://github.com/Rapptz/discord.py) (Discord library used in bot)\n" \
                       "[Crystalmathlabs](http://www.crystalmathlabs.com/tracker/) (EHP rates)\n" \
                       "[Old school runescape](http://oldschool.runescape.com/) (Hiscores, game news)\n" \
@@ -81,7 +79,6 @@ class DiscordCog(commands.Cog):
                       "[OSRS Wiki](https://oldschool.runescape.wiki) (Wiki)"
         embed = discord.Embed(title=appinfo.name, description=embed_desc)
         embed.add_field(name="Credits", value=credits_val, inline=False)
-        embed.add_field(name="Latest changes", value=changelog)
         embed.set_thumbnail(url=appinfo.icon_url)
 
         await ctx.send(embed=embed)
@@ -138,25 +135,25 @@ class DiscordCog(commands.Cog):
             solution_formatted = f"{round(solution, 3):,}".replace(",", " ")
         await ctx.send(solution_formatted)
 
-    @commands.command(name="beer", aliases=["drink"])
+    @commands.command(name="beer", aliases=["drink", "olut"])
     @commands.guild_only()
     async def add_drink(self, ctx: commands.Context):
-        pass
+        raise NotImplementedError
 
     @commands.command(name="undrink", aliases=["unbeer", "puke"])
     @commands.guild_only()
     async def remove_drink(self, ctx: commands.Context):
-        pass
+        raise NotImplementedError
 
     @commands.command(name="beerscores", aliases=["beers", "drinks"])
     @commands.guild_only()
     async def beerscores(self, ctx: commands.Context):
-        pass
+        raise NotImplementedError
 
     @commands.command(name="reminder", aliases=["remindme"])
     @commands.guild_only()
     async def add_reminder(self, ctx: commands.Context, *args):
-        pass
+        raise NotImplementedError
 
     @commands.command(name="roll", aliases=["dice", "die"])
     async def roll_die(self, ctx: commands.Context, dice_options: Union[str, int] = 6):
@@ -208,11 +205,11 @@ class DiscordCog(commands.Cog):
     @commands.command(name="scommands", aliases=["servercommands", "customcommands", "ccommands"])
     @commands.guild_only()
     async def get_server_commands(self, ctx: commands.Context):
-        await ctx.send("yeet")
+        raise NotImplementedError
 
     @commands.command("commands")
     async def get_all_commands(self, ctx: commands.Context):
-        pass
+        raise NotImplementedError
 
 #     TODO: Mod commands and settings commands here?
 

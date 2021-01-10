@@ -51,7 +51,7 @@ class HelpCog(commands.Cog):
         elif message_content == "!help":
             await ctx.send("`!info`: Basic info about the bot and latest updates\n"
                            "`!commands`: Get a list of all available commands\n"
-                           "`!server commands`: Get a list of all custom commands for this server\n"
+                           "`!scommands`: Get a list of all custom commands for this server\n"
                            "`!help <command name>`: Get instructions for one command")
 
     @command_help.command(name="me")

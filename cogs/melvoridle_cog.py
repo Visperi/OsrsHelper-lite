@@ -61,7 +61,7 @@ class MelvoridleCog(commands.Cog):
             except aiohttp.ClientError:
                 await ctx.send("Could not find anything.")
                 return
-            
+
             candidates = helper_methods.parse_wiki_search_candidates(response, base_url)
             embed = discord.Embed(title="Did you mean", description="\n".join(candidates))
             await ctx.send(embed=embed)

@@ -74,6 +74,10 @@ class ErrorHandlerCog(commands.Cog):
             await ctx.send("You need more roles to execute this command.")
             return
 
+        elif isinstance(error, NotImplementedError):
+            await ctx.send("Sorry, this command has not been implemented yet :(")
+            return
+
         print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
