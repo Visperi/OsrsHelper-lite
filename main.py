@@ -8,8 +8,14 @@ import dateutil.parser
 import traceback
 import os
 from osrshelper import OsrsHelper
+from enum import Enum
 
 bot = OsrsHelper()
+
+
+class EBotVersion(Enum):
+    development = "development"
+    production = "production"
 
 
 @bot.event
@@ -75,15 +81,14 @@ async def start_reminder_loop():
 
 
 # noinspection PyBroadException
-def run(bot_version: str):
+def run(bot_version: EBotVersion):
     with open("Data files/credentials.json", "r") as credential_file:
         credential_data = json.load(credential_file)
 
-    api_token = credential_data["tokens"][bot_version]
-    # bot.mwiki_cache = Cache(name="Melvoridle")
-    # bot.wiki_cache = Cache(name="Osrs")
+    discord_api_token = credential_data["discord_api_tokens"][bot_version.value]
 
     # Initialize all default cogs into a list and try to load them
+    # Cog names must end with _cog
     cogs_path = f"{os.path.dirname(__file__)}/cogs"
     startup_extensions = ["cogs." + fname.rstrip(".py") for fname in os.listdir(cogs_path) if fname.endswith("_cog.py")]
 
@@ -94,13 +99,8 @@ def run(bot_version: str):
             print(f"Failed to load extension {extension}")
             traceback.print_exc()
 
-    bot.run(api_token, reconnect=True)
+    bot.run(discord_api_token, reconnect=True)
 
 
 if __name__ == "__main__":
-    # token = Settings.get_credential("tokens", "kehittajaversio")
-    # bot.aiohttp_session = aiohttp.ClientSession(loop=bot.loop)
-    # bot.reminder_loop_running = False
-    # bot.mwiki_cache = Cache(name="Melvoridle")
-    # bot.wiki_cache = Cache(name="Osrs")
-    run("kehittajaversio")
+    run(EBotVersion.development)

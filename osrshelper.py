@@ -4,7 +4,7 @@ from discord.ext import commands
 
 class OsrsHelper(commands.Bot):
     """
-    A subclass for commands.Bot to achieve better control (mainly to prevent PyCharm unresolved attribute warnings) on
+    A subclass for commands.Bot to get full control (and to prevent PyCharm unresolved attribute warnings) on
     custom and dynamic attributes without touching the original library files.
 
     @DynamicAttrs

@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
+import helper_methods
 import datetime
-import os
 import platform
-import static_functions
 import random
+import os
 from typing import Union
 from mathparse import mathparse
 
@@ -15,7 +15,7 @@ class DiscordCog(commands.Cog):
         self.bot = bot
 
     @staticmethod
-    def fetch_activity(activity: Union[discord.BaseActivity, discord.Spotify, discord.Activity]) -> str:
+    def fetch_user_activity(activity: Union[discord.BaseActivity, discord.Spotify, discord.Activity]) -> str:
         if activity is None:
             _activity = "None"
         elif isinstance(activity, discord.Spotify):
@@ -78,7 +78,7 @@ class DiscordCog(commands.Cog):
         author_info.add_field(name="Is early supporter", value=author.public_flags.early_supporter)
         author_info.add_field(name="User created", value=created_at)
         author_info.add_field(name="Joined at", value=joined_at)
-        author_info.add_field(name="Current activity", value=self.fetch_activity(author.activity), inline=False)
+        author_info.add_field(name="Current activity", value=self.fetch_user_activity(author.activity), inline=False)
         author_info.add_field(name="Server roles", value=", ".join(server_roles))
 
         await ctx.send(embed=author_info)
