@@ -28,6 +28,8 @@ import asyncio
 import traceback
 import sys
 import datetime
+import dateutil
+import threading
 from typing import Tuple, Union
 
 
@@ -45,14 +47,16 @@ urls = __UrlContainer()
 class CovidFiParser:
 
     def __init__(self, loop: asyncio.BaseEventLoop = asyncio.get_event_loop()):
-        self.local_tz = pytz.timezone("Europe/Helsinki")
+        self._local_tz = pytz.timezone("Europe/Helsinki")
         self.__client_session = aiohttp.ClientSession(loop=loop)
+        self.update_in_progress = False
 
         # Data variables
-        self.hospitalised_data: dict = dict()
-        self.corona_data: dict = dict()
-        self.vaccination_data: dict = dict()
-        self.update_timestamp: Union[None, datetime.datetime] = None
+        self.__hospitalised_data: dict = dict()
+        self.__corona_data: dict = dict()
+        self.__vaccination_data: dict = dict()
+        self.__daily_cases: dict = dict(confirmed=0, deaths=0, totalHospitalised=0, inWard=0, inIcu=0, shots=0)
+        self.last_update_dt: Union[None, datetime.datetime] = None
 
         # Cache update cooldown in minutes
         self.cooldown = 30
@@ -81,11 +85,12 @@ class CovidFiParser:
         response from Helsingin Sanomat APIs provide. No any extra parsing.
         :return: Tuple of summarized data, where the corona data is first, then hospitalized data.
         """
-        if not self.corona_data or not self.hospitalised_data or not self.vaccination_data:
-            raise ValueError("Cache has not been updated properly yet.")
-        return self.corona_data, self.hospitalised_data, self.vaccination_data
+        if not self.__corona_data or not self.__hospitalised_data or not self.__vaccination_data:
+            raise ValueError("Missing data from internal cache. This can follow from failing requests, from currently "
+                             "ongoing request or other similar issues.")
+        return self.__corona_data, self.__hospitalised_data, self.__vaccination_data
 
-    async def get_summarized_data(self) -> Tuple[dict, dict, dict]:
+    async def get_summarized_data(self) -> Tuple[dict, dict, dict, dict]:
         """
         Get summarized corona data, hospitalized data and vaccination data based on the latest data synchronization.
         The corona data contains the amount of confirmed cases and deaths, and the health care
@@ -117,19 +122,48 @@ class CovidFiParser:
         last_case = corona_data["deaths"][-1]
         summarized_corona["deaths"]["last_case"] = last_case
 
-        return summarized_corona, summarized_hospital, summarized_vaccination
+        return summarized_corona, summarized_hospital, summarized_vaccination, self.__daily_cases
 
-    # todo: Implement this and return with summarized
-    def __get_daily_cases(self) -> dict:
+    def __update_daily_cases(self) -> None:
         """
-        Get the new cases that were reported during the last day. Can also be negative, if some of the cases are
-        removed. The data is parsed into signed format into categories confirmed and deaths.
-        :return: Dictionary containing new daily corona cases and deaths as a signed numbers.
+        Updates the daily cases based on the latest updated data. New cases are usually updated online in the next day,
+        so a 30 hour delay has been chosen here for them, as they can not be seen before.
+
+        VERY SLOW METHOD (easily near 100 000 operations)! Call in a background thread if always responsive data
+        getters are desired.
         """
         utc_now = datetime.datetime.utcnow()
-        daily_cases = {"confirmed": 0, "deaths": 0, "vaccinations": 0}
+        hospital_finland = [dict_ for dict_ in self.__hospitalised_data["hospitalised"] if dict_["area"] == "Finland"]
+        vaccinations_finland = [dict_ for dict_ in self.__vaccination_data if dict_["area"] == "Finland"]
+        confirmed_finland = self.__corona_data["confirmed"]
+        deaths_finland = self.__corona_data["deaths"]
 
-        return daily_cases
+        self.__calculate_daily_cases(utc_now, hospital_finland)
+        self.__calculate_daily_cases(utc_now, vaccinations_finland)
+        self.__calculate_daily_cases(utc_now, confirmed_finland, root_key="confirmed")
+        self.__calculate_daily_cases(utc_now, deaths_finland, root_key="deaths")
+        self.update_in_progress = False
+
+    def __calculate_daily_cases(self, dt_now: datetime.datetime, data: list, root_key=None) -> None:
+        if len(data) < 2:
+            return
+
+        max_hours_diff = 30
+        if not root_key:
+            last_data = data[-1]
+            last_data_dt = dateutil.parser.parse(last_data["date"]).replace(tzinfo=None)
+
+            # Calculate the difference between two last last data, if latest data is 30 hour or less old
+            if (dt_now - last_data_dt).total_seconds() <= max_hours_diff * 3600:
+                second_last_data = data[-2]
+                for key, value in last_data.items():
+                    if key in self.__daily_cases.keys():
+                        self.__daily_cases[key] = last_data[key] - second_last_data[key]
+        else:
+            for dict_ in data:
+                dict_dt = dateutil.parser.parse(dict_["date"]).replace(tzinfo=None)
+                if (dt_now - dict_dt).total_seconds() <= max_hours_diff * 3600:
+                    self.__daily_cases[root_key] += 1
 
     async def __cache_loop(self) -> None:
         """
@@ -140,16 +174,21 @@ class CovidFiParser:
         cooldown_min = self.cooldown * 60
         async with self.__client_session as session:
             while True:
+                self.update_in_progress = True
                 try:
                     results = await asyncio.gather(self.__fetch_url(session, urls.hospital_data_url),
                                                    self.__fetch_url(session, urls.corona_data_url),
                                                    self.__fetch_url(session, urls.vaccination_data_url))
-                    self.hospitalised_data = results[0]
-                    self.corona_data = results[1]
-                    self.vaccination_data = results[2]
-                    self.update_timestamp = datetime.datetime.utcnow()
+                    self.__hospitalised_data = results[0]
+                    self.__corona_data = results[1]
+                    self.__vaccination_data = results[2]
+                    self.last_update_dt = datetime.datetime.utcnow()
+                    # Daily cases calculation is very slow => do it in background thread
+                    t = threading.Thread(target=self.__update_daily_cases, daemon=True)
+                    t.start()
                     failed_updates = 0
                 except Exception as e:
+                    self.update_in_progress = False
                     print(f"Exception during cache update.")
                     traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
                     failed_updates += 1

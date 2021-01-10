@@ -99,6 +99,16 @@ class FinExclusiveCog(commands.Cog):
             embed.add_field(name="Ulkomaisena", value="\n".join(as_foreign))
         await ctx.send(embed=embed)
 
+    @staticmethod
+    def __format_daily_differences(daily_cases: dict) -> dict:
+        for key, diff in daily_cases.items():
+            if diff == 0:
+                daily_cases[key] = ""
+            else:
+                daily_cases[key] = f"({diff:+})"
+
+        return daily_cases
+
     @commands.command(name="korona", aliases=["corona", "gorre"])
     async def get_corona_situation(self, ctx: commands.Context):
         """
@@ -112,41 +122,54 @@ class FinExclusiveCog(commands.Cog):
             await ctx.send("Dataa ei ole vielä päivitetty. Yritä hetken kuluttua uudelleen.")
             return
 
-        update_ts = helper_methods.localize_timestamp(self.covid_parser.update_timestamp)
+        update_ts = helper_methods.localize_timestamp(self.covid_parser.last_update_dt)
         embed = discord.Embed(title="Koronan tilanne Suomessa")
         embed.set_thumbnail(url=covid19_parser.urls.corona_icon_url)
-        embed.set_footer(text=f"Data päivitetty viimeksi: {update_ts}")
+        if self.covid_parser.update_in_progress:
+            embed.set_footer(text="Datan päivitys oli parhaillaan käynnissä komennon aikana.\n"
+                                  "Näytetty data ei välttämättä vastaa viimeisimpiä tietoja.")
+        else:
+            embed.set_footer(text=f"Data päivitetty viimeksi: {update_ts}")
 
         corona_data = data[0]
         hospital_data = data[1]
         vaccination_data = data[2]
+        daily_cases = data[3].copy()
+        daily_cases_formatted = self.__format_daily_differences(daily_cases)
+
+        daily_confirmed = daily_cases_formatted["confirmed"]
+        daily_deaths = daily_cases_formatted["deaths"]
+        daily_total_hospitalized = daily_cases_formatted["totalHospitalised"]
+        daily_in_ward = daily_cases_formatted["inWard"]
+        daily_in_icu = daily_cases_formatted["inIcu"]
+        daily_vaccinations = daily_cases_formatted["shots"]
 
         confirmed = corona_data["confirmed"]["count"]
         confirmed_last = corona_data["confirmed"]["last_case"]
         confirmed_last_area = confirmed_last["healthCareDistrict"]
         confirmed_last_ts = helper_methods.localize_timestamp(confirmed_last["date"])
-        embed.add_field(name="Tartunnat", value=f"{confirmed}\n"
+        embed.add_field(name="Tartunnat", value=f"{confirmed} {daily_confirmed}\n"
                                                 f"Viimeisin: {confirmed_last_ts}\n"
                                                 f"Alue: {confirmed_last_area}")
 
         hospital_in_ward = hospital_data["inWard"]
         hospital_in_icu = hospital_data["inIcu"]
         hospital_total = hospital_data["totalHospitalised"]
-        embed.add_field(name="Hoitoa vaativat", value=f"Osastohoidossa: {hospital_in_ward}\n"
-                                                      f"Tehohoidossa: {hospital_in_icu}\n"
-                                                      f"Yhteensä: {hospital_total}")
+        embed.add_field(name="Hoitoa vaativat", value=f"Osastohoidossa: {hospital_in_ward} {daily_in_ward}\n"
+                                                      f"Tehohoidossa: {hospital_in_icu} {daily_in_icu}\n"
+                                                      f"Yhteensä: {hospital_total} {daily_total_hospitalized}")
 
         deaths = corona_data["deaths"]["count"]
         deaths_last = corona_data["deaths"]["last_case"]
         deaths_last_area = deaths_last["area"]
         deaths_last_ts = helper_methods.localize_timestamp(deaths_last["date"])
-        embed.add_field(inline=False, name="Menehtyneet", value=f"{deaths}\n"
+        embed.add_field(inline=False, name="Menehtyneet", value=f"{deaths} {daily_deaths}\n"
                                                                 f"Viimeisin: {deaths_last_ts}\n"
                                                                 f"Alue: {deaths_last_area}")
 
         vaccinations_total = vaccination_data["shots"]
         vaccinations_last_ts = helper_methods.localize_timestamp(vaccination_data["date"])
-        embed.add_field(inline=True, name="Rokotuksia", value=f"Yhteensä: {vaccinations_total}\n"
+        embed.add_field(inline=True, name="Rokotuksia", value=f"Yhteensä: {vaccinations_total} {daily_vaccinations}\n"
                                                               f"Viimeisin: {vaccinations_last_ts}\n"
                                                               f"Alue: Koko Suomi")
 
