@@ -62,9 +62,16 @@ class ErrorHandlerCog(commands.Cog):
             except:
                 pass
 
-        # Will be raised if user gives amount of kills that is inconvertible to int in command 'loot'.
-        elif isinstance(error, commands.UserInputError) and ctx.command.name == "loot":
-            await ctx.send("The amount of kills must be an integer. Give kills first and then the boss name.")
+        elif isinstance(error, commands.NotOwner):
+            await ctx.send("Only the bot owner can execute this command.")
+            return
+
+        elif isinstance(error, commands.MissingPermissions):
+            await ctx.send("You need more permissions to execute this command.")
+            return
+
+        elif isinstance(error, commands.MissingRole):
+            await ctx.send("You need more roles to execute this command.")
             return
 
         print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)

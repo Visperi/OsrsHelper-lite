@@ -140,16 +140,26 @@ class CovidFiParser:
 
         self.__calculate_daily_cases(utc_now, hospital_finland)
         self.__calculate_daily_cases(utc_now, vaccinations_finland)
-        self.__calculate_daily_cases(utc_now, confirmed_finland, root_key="confirmed")
-        self.__calculate_daily_cases(utc_now, deaths_finland, root_key="deaths")
+        self.__calculate_daily_cases(utc_now, confirmed_finland, data_key="confirmed")
+        self.__calculate_daily_cases(utc_now, deaths_finland, data_key="deaths")
         self.update_in_progress = False
 
-    def __calculate_daily_cases(self, dt_now: datetime.datetime, data: list, root_key=None) -> None:
+    def __calculate_daily_cases(self, dt_now: datetime.datetime, data: list, data_key: str = None) -> None:
+        """
+        Calculate how many new cases there are in last max_hours_diff hours. These results can be negative.
+        Modifies the attribute daily_cases directly.
+
+        :param dt_now: Datetime object where the 30 hours delay is compared to. Usually current timestamp
+        :param data: List of dictionaries containing data from different dates
+        :param data_key: Root level dictionary key for given values. Giving this attribute indicates that the data is
+                         in such form that all entries should be looped through, and then after comparing dates the
+                         value in daily_cases incremented. (see the corona data url)
+        """
         if len(data) < 2:
             return
 
         max_hours_diff = 30
-        if not root_key:
+        if not data_key:
             last_data = data[-1]
             last_data_dt = dateutil.parser.parse(last_data["date"]).replace(tzinfo=None)
 
@@ -163,7 +173,7 @@ class CovidFiParser:
             for dict_ in data:
                 dict_dt = dateutil.parser.parse(dict_["date"]).replace(tzinfo=None)
                 if (dt_now - dict_dt).total_seconds() <= max_hours_diff * 3600:
-                    self.__daily_cases[root_key] += 1
+                    self.__daily_cases[data_key] += 1
 
     async def __cache_loop(self) -> None:
         """

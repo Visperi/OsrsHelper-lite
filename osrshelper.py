@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -35,11 +36,20 @@ class OsrsHelper(commands.Bot):
     """
 
     def __init__(self, command_prefix: str = "!", **options):
-        intents = discord.Intents.default()
-        intents.members = True
-        intents.presences = True
-        super().__init__(command_prefix=command_prefix, intents=intents, **options)
+        __intents = discord.Intents.default()
+        __intents.members = True
+        __intents.presences = True
+        super().__init__(command_prefix=command_prefix, intents=__intents, **options)
         self.remove_command("help")
 
         self.reminder_loop_running = False
+        self.aiohttp_session = aiohttp.ClientSession(loop=self.loop)
         self.caches = {}
+
+    async def fetch_url(self, url: str) -> str:
+        if url is None:
+            raise ValueError("Url can not be None.")
+        async with self.aiohttp_session.get(url, timeout=10) as resp:
+            if resp.status != 200:
+                resp.raise_for_status()
+            return await resp.text()
