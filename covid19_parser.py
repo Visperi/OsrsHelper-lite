@@ -129,7 +129,7 @@ class CovidFiParser:
         Updates the daily cases based on the latest updated data. New cases are usually updated online in the next day,
         so a 30 hour delay has been chosen here for them, as they can not be seen before.
 
-        VERY SLOW METHOD (easily near 100 000 operations)! Call in a background thread if always responsive data
+        VERY SLOW METHOD (easily near 50 000 operations)! Call in a background thread if always responsive data
         getters are desired.
         """
         utc_now = datetime.datetime.utcnow()
