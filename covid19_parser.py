@@ -31,20 +31,31 @@ import datetime
 from typing import Tuple, Union
 
 
-class CovidFiParser:
-
-    def __init__(self, loop: asyncio.BaseEventLoop = asyncio.get_event_loop()):
+class __UrlContainer:
+    def __init__(self):
         self.hospital_data_url = "https://w3qa5ydb4l.execute-api.eu-west-1.amazonaws.com/prod/finnishCoronaHospitalData"
         self.corona_data_url = "https://w3qa5ydb4l.execute-api.eu-west-1.amazonaws.com/prod/finnishCoronaData/v2"
         self.vaccination_data_url = "https://w3qa5ydb4l.execute-api.eu-west-1.amazonaws.com/prod/finnishVaccinationData"
         self.corona_icon_url = "https://i.imgur.com/lQ5ecBe.png"
+
+
+urls = __UrlContainer()
+
+
+class CovidFiParser:
+
+    def __init__(self, loop: asyncio.BaseEventLoop = asyncio.get_event_loop()):
         self.local_tz = pytz.timezone("Europe/Helsinki")
         self.__client_session = aiohttp.ClientSession(loop=loop)
+
+        # Data variables
         self.hospitalised_data: dict = dict()
         self.corona_data: dict = dict()
+        self.vaccination_data: dict = dict()
+        self.update_timestamp: Union[None, datetime.datetime] = None
+
         # Cache update cooldown in minutes
         self.cooldown = 30
-        self.update_timestamp: Union[None, datetime.datetime] = None
         # Start the loop for caching
         loop.create_task(self.__cache_loop())
 
@@ -64,35 +75,39 @@ class CovidFiParser:
                 resp.raise_for_status()
             return await resp.json()
 
-    async def get_raw_data(self) -> Tuple[dict, dict]:
+    async def get_raw_data(self) -> Tuple[dict, dict, dict]:
         """
         Get the raw data of both corona data and hospitalized data. This data contains all information that the
-        response from Helsingin Sanomat API provides. No any extra parsing.
+        response from Helsingin Sanomat APIs provide. No any extra parsing.
         :return: Tuple of summarized data, where the corona data is first, then hospitalized data.
         """
-        if not self.corona_data or not self.hospitalised_data:
+        if not self.corona_data or not self.hospitalised_data or not self.vaccination_data:
             raise ValueError("Cache has not been updated properly yet.")
-        return self.corona_data, self.hospitalised_data
+        return self.corona_data, self.hospitalised_data, self.vaccination_data
 
-    async def get_summarized_data(self) -> Tuple[dict, dict]:
+    async def get_summarized_data(self) -> Tuple[dict, dict, dict]:
         """
-        Get summarized corona data and hospitalized based on the latest data synchronization.
+        Get summarized corona data, hospitalized data and vaccination data based on the latest data synchronization.
         The corona data contains the amount of confirmed cases and deaths, and the health care
         district for the latest report in both categories.
         Hospitalized data contains the amount of people requiring health care services. They are categorized into
         categories in ward, in ICU and total.
-        :return: Tuple of summarized data, where the corona data is first, then hospitalized data.
+        Vaccination data contains the amount of vaccinations in whole area of Finland.
+
+        :return: Tuple of summarized data, where the data is in order (corona_data, hospitalized, vaccinations)
         """
         raw_data = await self.get_raw_data()
         corona_data = raw_data[0]
         hospitalised_data = raw_data[1]
+        vaccination_data = raw_data[2]
         summarized_corona = \
             {
                 "confirmed": {"count": 0, "last_case": None},
                 "deaths": {"count": 0, "last_case": None}
             }
-        # Hospital data is in much simpler format
+        # Hospital data and vaccination data are in much simpler format
         summarized_hospital = hospitalised_data["hospitalised"][-1]
+        summarized_vaccination = vaccination_data[-1]
 
         summarized_corona["confirmed"]["count"] = len(corona_data["confirmed"])
         last_case = corona_data["confirmed"][-1]
@@ -102,7 +117,7 @@ class CovidFiParser:
         last_case = corona_data["deaths"][-1]
         summarized_corona["deaths"]["last_case"] = last_case
 
-        return summarized_corona, summarized_hospital
+        return summarized_corona, summarized_hospital, summarized_vaccination
 
     # todo: Implement this and return with summarized
     def __get_daily_cases(self) -> dict:
@@ -112,6 +127,9 @@ class CovidFiParser:
         :return: Dictionary containing new daily corona cases and deaths as a signed numbers.
         """
         utc_now = datetime.datetime.utcnow()
+        daily_cases = {"confirmed": 0, "deaths": 0, "vaccinations": 0}
+
+        return daily_cases
 
     async def __cache_loop(self) -> None:
         """
@@ -123,10 +141,12 @@ class CovidFiParser:
         async with self.__client_session as session:
             while True:
                 try:
-                    results = await asyncio.gather(self.__fetch_url(session, self.hospital_data_url),
-                                                   self.__fetch_url(session, self.corona_data_url))
+                    results = await asyncio.gather(self.__fetch_url(session, urls.hospital_data_url),
+                                                   self.__fetch_url(session, urls.corona_data_url),
+                                                   self.__fetch_url(session, urls.vaccination_data_url))
                     self.hospitalised_data = results[0]
                     self.corona_data = results[1]
+                    self.vaccination_data = results[2]
                     self.update_timestamp = datetime.datetime.utcnow()
                     failed_updates = 0
                 except Exception as e:

@@ -22,7 +22,7 @@ the commands are isolated into their respective cogs!
 | Software/Library        | Version | Documentation                                                  |
 |:-----------------------:|:-------:|:--------------------------------------------------------------:|
 | Python                  | 3.6+    | [Link](https://docs.python.org/3.6/)                           |
-| discord.py              | 1.5.1+  | [Link](https://discordpy.readthedocs.io/en/stable/)            |
+| discord.py              | 1.6+    | [Link](https://discordpy.readthedocs.io/en/stable/)            |
 | aiohttp                 | 3.6.3+  | [Link](https://docs.aiohttp.org/en/stable/)                    |
 | mathparse               | 0.1.5+  | [Link](https://github.com/gunthercox/mathparse)                |
 | pytz                    | 2020.5+ | [Link](https://pypi.org/project/pytz/)                         |

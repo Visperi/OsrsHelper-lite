@@ -114,11 +114,12 @@ class FinExclusiveCog(commands.Cog):
 
         update_ts = helper_methods.localize_timestamp(self.covid_parser.update_timestamp)
         embed = discord.Embed(title="Koronan tilanne Suomessa")
-        embed.set_thumbnail(url=self.covid_parser.corona_icon_url)
+        embed.set_thumbnail(url=covid19_parser.urls.corona_icon_url)
         embed.set_footer(text=f"Data päivitetty viimeksi: {update_ts}")
 
         corona_data = data[0]
         hospital_data = data[1]
+        vaccination_data = data[2]
 
         confirmed = corona_data["confirmed"]["count"]
         confirmed_last = corona_data["confirmed"]["last_case"]
@@ -142,6 +143,12 @@ class FinExclusiveCog(commands.Cog):
         embed.add_field(inline=False, name="Menehtyneet", value=f"{deaths}\n"
                                                                 f"Viimeisin: {deaths_last_ts}\n"
                                                                 f"Alue: {deaths_last_area}")
+
+        vaccinations_total = vaccination_data["shots"]
+        vaccinations_last_ts = helper_methods.localize_timestamp(vaccination_data["date"])
+        embed.add_field(inline=True, name="Rokotuksia", value=f"Yhteensä: {vaccinations_total}\n"
+                                                              f"Viimeisin: {vaccinations_last_ts}\n"
+                                                              f"Alue: Koko Suomi")
 
         await ctx.send(embed=embed)
 

@@ -32,9 +32,20 @@ tz_fi = pytz.timezone("Europe/Helsinki")
 
 
 def localize_timestamp(original_ts: Union[str, datetime.datetime], fmt: str = "%Y-%m-%d %H:%M") -> str:
+
     dt = dateutil.parser.parse(str(original_ts)).replace(microsecond=0, tzinfo=None)
     localized = pytz.utc.localize(dt).astimezone(tz_fi).strftime(fmt)
     return localized
+
+
+def isofy_timestamp(original_ts: datetime.datetime, date_only: bool = False) -> str:
+    if date_only:
+        result = original_ts.strftime("%Y-%m-%d")
+        return result
+    else:
+        result = str(original_ts.replace(microsecond=0))
+
+    return result
 
 
 async def fetch_url(session: aiohttp.ClientSession, url: str) -> aiohttp.ClientResponse:
@@ -46,7 +57,8 @@ async def fetch_url(session: aiohttp.ClientSession, url: str) -> aiohttp.ClientR
         return resp
 
 if __name__ == '__main__':
-    a = localize_timestamp("2020-12-29T15:00:00.000Z")
-    print(a)
-    print(type(a))
-
+    ts = datetime.datetime.utcnow().replace(microsecond=0)
+    isofied = isofy_timestamp(ts)
+    isofied2 = isofy_timestamp(ts, date_only=True)
+    print(isofied)
+    print(isofied2)

@@ -91,8 +91,8 @@ class DiscordCog(commands.Cog):
     async def get_user_info(self, ctx: commands.Context):
         author = ctx.message.author
 
-        created_at = static_functions.isofy(author.created_at) + " UTC"
-        joined_at = static_functions.isofy(author.joined_at) + " UTC"
+        created_at = f"{helper_methods.isofy_timestamp(author.created_at)} UTC"
+        joined_at = f"{helper_methods.isofy_timestamp(author.joined_at)} UTC"
         # Every user always have role @everyone so it's a little bit redundant here
         server_roles = [str(role) for role in author.roles if str(role) != "@everyone"]
 
