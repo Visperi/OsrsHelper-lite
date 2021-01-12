@@ -22,176 +22,116 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Union, List
+from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView
+from collections.abc import MutableMapping
 import datetime
 
 
 class _CacheItem:
 
-    def __init__(self, name: str, value: object, last_hit: datetime.datetime = None):
-        self.name = name
-        self.original_reference = value
-        self.last_hit = last_hit or datetime.datetime.utcnow()
+    def __init__(self, value: Any):
+        if not value:
+            raise ValueError("Cache items must have some concrete value.")
+        self.last_hit = datetime.datetime.utcnow()
+        self.value = value
+        self.total_hits = 0
 
-    def __str__(self):
-        return self.name
+    def do_hit(self):
+        self.last_hit = datetime.datetime.utcnow()
+        self.total_hits += 1
 
 
-class Cache:
+class Cache(MutableMapping):
 
-    def __init__(self, name: str = None, item_lifetime: Union[int, dict] = None,
-                 existing_cache: list = None):
-        """
-        :param name: Optional identifier for the cache
-        :param item_lifetime: Lifetime for cache items. Deprecated entries are removed on synchronisation. None
-                              means infinite lifetime. Integer is converted to hours, dictionary can have keys
-                              'days', 'hours' and 'minutes'.
-        :param existing_cache: A pre-made cache list of objects. If none, an empty cache is created. Useful for e.g.
-                               combining two caches.
-        """
-        self.name = name
-        self._ITEM_LIFETIME = None
-        self._CACHE = []
+    def __init__(self, name: str = None, allow_type_override: bool = True):
+        self.__cache: Dict[str, _CacheItem] = {}
+        self.__item_lifetime: Union[None, int] = None
+        self.allow_type_override: bool = allow_type_override
+        self.name: str = name
 
-        if item_lifetime is not None:
-            self.set_lifetime(item_lifetime)
+    def __contains__(self, item: str) -> bool:
+        return item in self.__cache
 
-        if existing_cache is not None:
-            self.add(existing_cache)
+    def __len__(self):
+        return len(self.__cache)
 
-    def set_lifetime(self, lifetime: Union[int, dict]):
-        """
-        Set lifetime for the cache items. Items exceeding their lifetime are removed from cache on synchronisation.
-        :param lifetime: Integer, None or dictionary giving the item lifetime. Integers are converted to hours and
-                              dictionary can have keys 'days', 'hours' and 'minutes' that are converted into appropriate
-                              values. None means infinite lifetime.
-        """
-        if lifetime is None:
-            self._ITEM_LIFETIME = None
+    def __getitem__(self, cache_key: str) -> Any:
+        cache_item = self.__cache[cache_key]
+        cache_item.do_hit()
+        return cache_item.value
+
+    def __setitem__(self, cache_key: str, value: Any):
+        if not value:
+            raise ValueError("Cache items must have some concrete value.")
+
+        new_item = _CacheItem(value)
+        if self.allow_type_override:
+            self.__cache[cache_key] = new_item
             return
 
-        if isinstance(lifetime, int):
-            days = 0
-            hours = lifetime
-            minutes = 0
-        else:
-            try:
-                days = lifetime["days"]
-            except KeyError:
-                days = 0
-            try:
-                hours = lifetime["hours"]
-            except KeyError:
-                hours = 0
-            try:
-                minutes = lifetime["minutes"]
-            except KeyError:
-                minutes = 0
+        # Overriding cache items with new types is now allowed
+        try:
+            existing = self[cache_key]
+            if type(existing) != type(value):
+                raise TypeError(f"Different type of cache item already owns key \"{cache_key}\" (expected "
+                                f"type {type(existing)}, got type {type(value)}")
+        except KeyError:
+            self.__cache[cache_key] = new_item
 
-        timedelta = datetime.timedelta(days=days, hours=hours, minutes=minutes)
+    def __iter__(self):
+        yield from self.__cache.items()
 
-        if timedelta.total_seconds() <= 0:
-            raise ValueError("The cache item lifetime must be a positive value or None.")
+    def __delitem__(self, cache_key: str):
+        del self.__cache[cache_key]
 
-        self._ITEM_LIFETIME = timedelta
+    def __repr__(self):
+        return repr(self.__cache)
 
-    def __str__(self) -> str:
-        """
-        Convert the current cache items into a string. Items are separated with attribute entry_separator.
-        If this is None, the items are separated by comma.
-        :return: Cache items as a string
-        """
+    def __str__(self):
+        return str(self.__cache)
 
-        cache_items = [str(item) for item in self.get_items()]
-        res = ", ".join(cache_items)
-        return f"Cache({res})"
+    def pop(self, cache_key: str) -> Any:
+        return self.__cache.pop(cache_key).value
 
-    def __repr__(self) -> str:
-        return str(self)
+    def popitem(self) -> Tuple[str, Any]:
+        lifo_item = self.__cache.popitem()
+        return lifo_item[0], lifo_item[1].value
 
-    def __len__(self) -> int:
-        return len(self._CACHE)
+    def items(self) -> ItemsView[str, _CacheItem]:
+        return self.__cache.items()
 
-    def __contains__(self, item: object) -> bool:
-        for cache_item in self._CACHE:
-            if item is cache_item.original_reference or item == cache_item.original_reference:
-                return True
-        return False
+    def keys(self) -> KeysView[str]:
+        return self.__cache.keys()
 
-    def get_items(self) -> list:
-        """
-        Get list of cache items.
-        :return: List of cache items
-        """
-        return [item.original_reference for item in self._CACHE]
+    def values(self) -> ValuesView[_CacheItem]:
+        return self.__cache.values()
 
     def clear(self):
-        """
-        Clear contents of the cache. CANNOT BE UNDONE!
-        """
-        self._CACHE.clear()
+        self.__cache.clear()
 
-    def _find_cache_item(self, obj: object) -> _CacheItem:
+    def get(self, cache_key: str, default=None) -> Any:
+        try:
+            return self[cache_key]
+        except KeyError:
+            return default
 
-        for item in self._CACHE:
-            if obj is item.original_reference:
-                return item
+    def set_item_lifetime(self, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0):
+        total_seconds = seconds
 
-        raise ValueError(f"Could not find item {str(obj)} from cache.")
+        total_seconds += minutes * 60
+        total_seconds += hours * 3600
+        total_seconds += days * 3600 * 24
 
-    def _add_item(self, cache_item: object):
-        timestamp = datetime.datetime.utcnow()
+        if total_seconds < 0:
+            raise ValueError("Item lifetime can not be a negative value.")
 
-        if cache_item not in self:
-            name = str(cache_item)
-            new_item = _CacheItem(name, cache_item)
-            self._CACHE.append(new_item)
-        else:
-            item = self._find_cache_item(cache_item)
-            item.last_hit = timestamp
+        self.__item_lifetime = total_seconds
 
-    def add(self, cache_item: Union[object, List[object]]):
-        """
-        Add new content to the cache. Skip contents that already exists in cache.
-        :param cache_item: Content(s) that should be added. Single object or list of objects
-        """
-        if isinstance(cache_item, list):
-            for item in cache_item:
-                self._add_item(item)
-        else:
-            self._add_item(cache_item)
+    def add(self, value: Any):
+        self[str(value)] = value
 
-    def _delete_item(self, cache_item: object):
-        deleted_item = self._find_cache_item(cache_item)
-        self._CACHE.remove(deleted_item)
+    def delete(self, cache_key: str):
+        del self[cache_key]
 
-    def delete(self, cache_item: Union[object, List[object]]):
-        """
-        Delete a single item or list of items from the cache.
-        :param cache_item: Single object or list of objects
-        """
-        if isinstance(cache_item, list):
-            for item in cache_item:
-                self._delete_item(item)
-        else:
-            self._delete_item(cache_item)
-
-    def delete_deprecated(self) -> int:
-        """
-        Delete items that have exceeded their lifetime from cache. Nothing will be deleted if lifetime is None.
-        :return: Number of items deleted from cache
-        """
-        current_time = datetime.datetime.utcnow()
-        deprecated_items = []
-
-        if self._ITEM_LIFETIME is None:
-            print("Nothing to delete. Item lifetime is infinite.")
-            return 0
-
-        for item in self._CACHE:
-            diff = current_time - item.last_hit
-            if diff >= self._ITEM_LIFETIME:
-                deprecated_items.append(item)
-
-        self.delete(deprecated_items)
-        return len(deprecated_items)
+    # def delete_deprecated(self):
+    #     for key, value in self:
