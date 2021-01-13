@@ -73,11 +73,11 @@ These operations makes it possible to update cogs on the go, without a need to r
 
 ## Current status
 - Basic layout and functionality **Done**
-- Caching available for commands **TBD**
+- Caching available for commands **Done**
 - Extension reloading on the go  **Done**
 - Cog functionality
     - discord cog       **Started**
-    - error handler cog **TBD**
+    - error handler cog **Basics done**
     - fin exclusive cog **Done**
     - help cog          **TBD**
     - maintenance cog   **Basics done**
