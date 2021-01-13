@@ -22,30 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView
+from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView, Iterable
 from collections.abc import MutableMapping
 import datetime
 
 
-class _CacheItem:
+class CacheItem:
 
     def __init__(self, value: Any):
-        if not value:
-            raise ValueError("Cache items must have some concrete value.")
         self.last_hit = datetime.datetime.utcnow()
         self.value = value
         self.total_hits = 0
 
-    def do_hit(self):
+    def _hit(self):
         self.last_hit = datetime.datetime.utcnow()
         self.total_hits += 1
 
 
+# noinspection PyProtectedMember
 class Cache(MutableMapping):
 
     def __init__(self, name: str = None, allow_type_override: bool = True):
-        self.__cache: Dict[str, _CacheItem] = {}
-        self.__item_lifetime: Union[None, int] = None
+        self.__cache: Dict[str, CacheItem] = {}
+        self.item_lifetime: Union[None, int] = None
         self.allow_type_override: bool = allow_type_override
         self.name: str = name
 
@@ -57,14 +56,12 @@ class Cache(MutableMapping):
 
     def __getitem__(self, cache_key: str) -> Any:
         cache_item = self.__cache[cache_key]
-        cache_item.do_hit()
+        cache_item._hit()
         return cache_item.value
 
     def __setitem__(self, cache_key: str, value: Any):
-        if not value:
-            raise ValueError("Cache items must have some concrete value.")
 
-        new_item = _CacheItem(value)
+        new_item = CacheItem(value)
         if self.allow_type_override:
             self.__cache[cache_key] = new_item
             return
@@ -78,7 +75,7 @@ class Cache(MutableMapping):
         except KeyError:
             self.__cache[cache_key] = new_item
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Tuple[str, CacheItem]]:
         yield from self.__cache.items()
 
     def __delitem__(self, cache_key: str):
@@ -97,13 +94,13 @@ class Cache(MutableMapping):
         lifo_item = self.__cache.popitem()
         return lifo_item[0], lifo_item[1].value
 
-    def items(self) -> ItemsView[str, _CacheItem]:
+    def items(self) -> ItemsView[str, CacheItem]:
         return self.__cache.items()
 
     def keys(self) -> KeysView[str]:
         return self.__cache.keys()
 
-    def values(self) -> ValuesView[_CacheItem]:
+    def values(self) -> ValuesView[CacheItem]:
         return self.__cache.values()
 
     def clear(self):
@@ -125,13 +122,49 @@ class Cache(MutableMapping):
         if total_seconds < 0:
             raise ValueError("Item lifetime can not be a negative value.")
 
-        self.__item_lifetime = total_seconds
+        if total_seconds == 0:
+            self.reset_item_lifetime()
+        else:
+            self.item_lifetime = total_seconds
 
-    def add(self, value: Any):
-        self[str(value)] = value
+    def reset_item_lifetime(self):
+        self.item_lifetime = None
+
+    def add(self, value: Any, cache_key: str = None):
+        if not cache_key:
+            self[str(value)] = value
+        elif isinstance(cache_key, str):
+            self[cache_key] = value
+        else:
+            raise TypeError("Cache keys must be strings.")
 
     def delete(self, cache_key: str):
         del self[cache_key]
 
-    # def delete_deprecated(self):
-    #     for key, value in self:
+    def delete_deprecated(self) -> int:
+        if not self.item_lifetime:
+            return 0
+
+        tmp = {}
+        current_dt = datetime.datetime.utcnow()
+        # Make a new dict of current cache contents which last hits are recent enough
+        for cache_key, cache_item in self.items():
+            if (current_dt - cache_item.last_hit).total_seconds() < self.item_lifetime:
+                tmp[cache_key] = cache_item
+
+        deleted_items = len(self) - len(tmp)
+        self.__cache = tmp
+        return deleted_items
+
+    def delete_unpopular(self, hits_limit: int):
+        if hits_limit < 0:
+            raise ValueError("Hits limit must be equal or greater than zero.")
+
+        tmp = {}
+        for cache_key, cache_item in self.items():
+            if cache_item.total_hits >= hits_limit:
+                tmp[cache_key] = cache_item
+
+        deleted_items = len(self) - len(tmp)
+        self.__cache = tmp
+        return deleted_items
