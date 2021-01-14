@@ -59,7 +59,7 @@ class Cache(MutableMapping):
         :param allow_type_override: If True, values stored into cache can be any type. If false, trying to overwrite
                                     an existing cache item with different type of value raises an error.
         """
-        self.__cache: Dict[str, CacheItem] = {}
+        self.__cache: Dict[Any, CacheItem] = {}
         self.item_lifetime: Union[None, int] = None
         self.allow_type_override: bool = allow_type_override
         self.name: str = name
@@ -70,13 +70,12 @@ class Cache(MutableMapping):
     def __len__(self):
         return len(self.__cache)
 
-    def __getitem__(self, cache_key: str) -> Any:
+    def __getitem__(self, cache_key: Any) -> Any:
         cache_item = self.__cache[cache_key]
         cache_item._hit()
         return cache_item.value
 
-    def __setitem__(self, cache_key: str, value: Any):
-
+    def __setitem__(self, cache_key: Any, value: Any):
         new_item = CacheItem(value)
         if self.allow_type_override:
             self.__cache[cache_key] = new_item
@@ -91,10 +90,10 @@ class Cache(MutableMapping):
         except KeyError:
             self.__cache[cache_key] = new_item
 
-    def __iter__(self) -> Iterable[Tuple[str, CacheItem]]:
+    def __iter__(self) -> Iterable[Tuple[Any, CacheItem]]:
         yield from self.__cache.items()
 
-    def __delitem__(self, cache_key: str):
+    def __delitem__(self, cache_key: Any):
         del self.__cache[cache_key]
 
     def __repr__(self):
@@ -103,7 +102,7 @@ class Cache(MutableMapping):
     def __str__(self):
         return str(self.__cache)
 
-    def pop(self, cache_key: str) -> Any:
+    def pop(self, cache_key: Any) -> Any:
         """
         Pop an item from cache.
 
@@ -112,7 +111,7 @@ class Cache(MutableMapping):
         """
         return self.__cache.pop(cache_key).value
 
-    def popitem(self) -> Tuple[str, Any]:
+    def popitem(self) -> Tuple[Any, Any]:
         """
         Pop the last added item from cache.
 
@@ -122,7 +121,7 @@ class Cache(MutableMapping):
         lifo_item = self.__cache.popitem()
         return lifo_item[0], lifo_item[1].value
 
-    def items(self) -> ItemsView[str, CacheItem]:
+    def items(self) -> ItemsView[Any, CacheItem]:
         """
         Return the cache contents as a raw CacheItem objects in an ordinary ItemsView
 
@@ -130,7 +129,7 @@ class Cache(MutableMapping):
         """
         return self.__cache.items()
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> KeysView[Any]:
         """
         Get the cache keys as an ordinary KeysView.
         """
@@ -148,7 +147,7 @@ class Cache(MutableMapping):
         """
         self.__cache.clear()
 
-    def get(self, cache_key: str, default=None) -> Any:
+    def get(self, cache_key: Any, default=None) -> Any:
         """
         Get a cache item. If not found, return the default value instead.
 
@@ -193,7 +192,7 @@ class Cache(MutableMapping):
         """
         self.item_lifetime = None
 
-    def add(self, value: Any, cache_key: str = None):
+    def add(self, value: Any, cache_key: Any = None):
         """
         Add an item into cache. Available to offer a way to call this operation just by giving the cached item. If no
         cache key is given, str() method for the item is called and the return value used as key.
@@ -203,10 +202,8 @@ class Cache(MutableMapping):
         """
         if not cache_key:
             self[str(value)] = value
-        elif isinstance(cache_key, str):
-            self[cache_key] = value
         else:
-            raise TypeError("Cache keys must be strings.")
+            self[cache_key] = value
 
     def delete(self, cache_key: str) -> None:
         """

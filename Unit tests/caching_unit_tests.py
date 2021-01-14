@@ -77,6 +77,10 @@ class CacheTesting(unittest.TestCase):
                            }
         cache["e"] = multilevel_dict
         cache["e"]["second"]["dict"]["cache1"]["testval"] = random_list
+        cache[123] = True
+
+        func_key = self.generate_string
+        cache[func_key] = "Functions and builtin objects are allowed too"
 
         self.assertEqual(cache["a"], "Single string")
         self.assertEqual(cache["b"], random_list)
@@ -90,6 +94,9 @@ class CacheTesting(unittest.TestCase):
         self.assertEqual(cache.get("d"), None)
         self.assertEqual(cache.get("sfdsa", -1), -1)
         self.assertEqual(cache.get("e"), cache["e"])
+
+        self.assertEqual(cache[123], True)
+        self.assertEqual(cache[func_key], "Functions and builtin objects are allowed too")
 
     def test_iter(self):
         cache = Cache()
@@ -106,6 +113,7 @@ class CacheTesting(unittest.TestCase):
     def test_poppers_del(self):
         cache = Cache()
         list_ = [1, 2, 3, 4, 5]
+        cache[1.4564] = "a"
         cache["val0"] = 65465
         cache["val1"] = "aaaaa"
         cache["val2"] = list_
@@ -114,6 +122,7 @@ class CacheTesting(unittest.TestCase):
         self.assertEqual(cache.popitem()[1], [1, 2, 3, 4, 5, 6, 7, 8])
         self.assertEqual(cache.popitem()[1], list_)
         self.assertEqual(cache.pop("val0"), 65465)
+        self.assertEqual(cache.pop(1.4564), "a")
         self.assertTrue(len(cache) == 1)
 
     def test_clear(self):
@@ -143,9 +152,10 @@ class CacheTesting(unittest.TestCase):
 
         cache.add(123, "123")
         cache.add(123)
+        cache.add("Does not raise", 123)
         self.assertRaises(TypeError, cache.add, "Should raise", "123")
         self.assertRaises(TypeError, cache.add, [], "123")
-        self.assertRaises(TypeError, cache.add, "Key is not str", 12431)
+        self.assertRaises(TypeError, cache.add, 0, 123)
 
     def test_delete_deprecated(self):
         cache = Cache()
