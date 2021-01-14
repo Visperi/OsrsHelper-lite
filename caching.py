@@ -28,6 +28,9 @@ import datetime
 
 
 class CacheItem:
+    """
+    Encapsulates the actual value and some extra internal values for items stored into Cache.
+    """
 
     def __init__(self, value: Any):
         self.last_hit = datetime.datetime.utcnow()
@@ -35,14 +38,27 @@ class CacheItem:
         self.total_hits = 0
 
     def _hit(self):
+        """
+        Update internal data of the cache item. These values measure when and how many times this item has
+        been requested.
+        """
         self.last_hit = datetime.datetime.utcnow()
         self.total_hits += 1
 
 
 # noinspection PyProtectedMember
 class Cache(MutableMapping):
+    """
+    Caching class for storing any types of data. Items in cache are internally stored as CacheItem objects, but their
+    values are returned instead unless specific collection commands are used.
+    """
 
     def __init__(self, name: str = None, allow_type_override: bool = True):
+        """
+        :param name: Optional name for the cache.
+        :param allow_type_override: If True, values stored into cache can be any type. If false, trying to overwrite
+                                    an existing cache item with different type of value raises an error.
+        """
         self.__cache: Dict[str, CacheItem] = {}
         self.item_lifetime: Union[None, int] = None
         self.allow_type_override: bool = allow_type_override
@@ -88,31 +104,75 @@ class Cache(MutableMapping):
         return str(self.__cache)
 
     def pop(self, cache_key: str) -> Any:
+        """
+        Pop an item from cache.
+
+        :param cache_key: Key to search from cache
+        :return: The value of popped item
+        """
         return self.__cache.pop(cache_key).value
 
     def popitem(self) -> Tuple[str, Any]:
+        """
+        Pop the last added item from cache.
+
+        :return: Tuple containing the cache key and the value stored into it
+        """
+
         lifo_item = self.__cache.popitem()
         return lifo_item[0], lifo_item[1].value
 
     def items(self) -> ItemsView[str, CacheItem]:
+        """
+        Return the cache contents as a raw CacheItem objects in an ordinary ItemsView
+
+        :return: ValuesView of the cache keys and respective CacheItem objects
+        """
         return self.__cache.items()
 
     def keys(self) -> KeysView[str]:
+        """
+        Get the cache keys as an ordinary KeysView.
+        """
         return self.__cache.keys()
 
     def values(self) -> ValuesView[CacheItem]:
+        """
+        Get the items stored in cache as an ordinary ValuesView collection of CacheItem objects.
+        """
         return self.__cache.values()
 
     def clear(self):
+        """
+        Clear the cache from items. Choose wisely.
+        """
         self.__cache.clear()
 
     def get(self, cache_key: str, default=None) -> Any:
+        """
+        Get a cache item. If not found, return the default value instead.
+
+        :param cache_key: Key to be searched from cache
+        :param default: Value that is returned if cache item is not found
+        :return: Cache item or the default value
+        """
         try:
             return self[cache_key]
         except KeyError:
             return default
 
     def set_item_lifetime(self, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0):
+        """
+        Set item lifetime for cached items. The total value is converted into total seconds. This value is then used to
+        decide deleted items when deleting deprecated items.
+
+        Available to set more complex lifetimes easily instead of calculating seconds manually.
+
+        :param seconds:
+        :param minutes:
+        :param hours:
+        :param days:
+        """
         total_seconds = seconds
 
         total_seconds += minutes * 60
@@ -122,15 +182,25 @@ class Cache(MutableMapping):
         if total_seconds < 0:
             raise ValueError("Item lifetime can not be a negative value.")
 
-        if total_seconds == 0:
-            self.reset_item_lifetime()
-        else:
-            self.item_lifetime = total_seconds
+        self.item_lifetime = total_seconds
 
     def reset_item_lifetime(self):
+        """
+        Reset the item lifetime to None, which in practice means an infinite lifetime. Available just to encapsulate
+        this operation into a safe method.
+
+        :return:
+        """
         self.item_lifetime = None
 
     def add(self, value: Any, cache_key: str = None):
+        """
+        Add an item into cache. Available to offer a way to call this operation just by giving the cached item. If no
+        cache key is given, str() method for the item is called and the return value used as key.
+
+        :param value: Value to be stored into cache
+        :param cache_key: Cache key for the item. If None, str(value) is used as the key
+        """
         if not cache_key:
             self[str(value)] = value
         elif isinstance(cache_key, str):
@@ -138,10 +208,24 @@ class Cache(MutableMapping):
         else:
             raise TypeError("Cache keys must be strings.")
 
-    def delete(self, cache_key: str):
+    def delete(self, cache_key: str) -> None:
+        """
+        Delete an item from cache. Available just to offer a visible counterpart method for add().
+        Normal dictionary operations are supported and may usually be better to achieve the same result.
+
+        :param cache_key: Key which the item is saved into
+        """
         del self[cache_key]
 
     def delete_deprecated(self) -> int:
+        """
+        Delete cache items based on the last time they were requested from cache. All items that have bigger than item
+        lifetime difference between their last hit and current time, are deleted.
+
+        Does nothing if item lifetime is None.
+
+        :return: Number of deleted items
+        """
         if not self.item_lifetime:
             return 0
 
@@ -156,7 +240,14 @@ class Cache(MutableMapping):
         self.__cache = tmp
         return deleted_items
 
-    def delete_unpopular(self, hits_limit: int):
+    def delete_unpopular(self, hits_limit: int) -> int:
+        """
+        Delete cache items based on their number of total hits. All items that have less than given number of total
+        hits are deleted.
+
+        :param hits_limit: Lower limit for total hits
+        :return: Number of deleted cache items
+        """
         if hits_limit < 0:
             raise ValueError("Hits limit must be equal or greater than zero.")
 
