@@ -34,6 +34,7 @@ class MelvoridleCog(commands.Cog):
 
     def __init__(self, bot: OsrsHelper):
         self.bot = bot
+        self.cache = bot.mwiki_cache
 
     @commands.command(name="mwiki")
     async def search_melvoridle_wiki(self, ctx: commands.Context, *, search: str):
@@ -44,9 +45,11 @@ class MelvoridleCog(commands.Cog):
         search_parameter = direct_page.replace("_", "+")
 
         try:
+            # At first, try to find an existing page by building a direct wiki page url
             direct_link = f"{direct_url}{direct_page}"
             await self.bot.fetch_url(f"{direct_url}{direct_page}")
             await ctx.send(f"<{direct_link}>")
+            return
         except asyncio.TimeoutError:
             await ctx.send("Melvoridle wiki answered too slowly. Try again later.")
             return

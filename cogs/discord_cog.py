@@ -29,14 +29,20 @@ import datetime
 import platform
 import random
 import os
+from caching import Cache
+import json
+import asyncio
 from typing import Union
 from mathparse import mathparse
 
 
 class DiscordCog(commands.Cog):
 
-    def __init__(self, bot: discord.ext.commands.Bot):
+    def __init__(self, bot: commands.bot):
         self.bot = bot
+        self.reminder_cache = Cache("reminders")
+        self.reminder_cache.set_item_lifetime(seconds=1)
+        self.run_reminder()
 
     @staticmethod
     def fetch_user_activity(activity: Union[discord.BaseActivity, discord.Spotify, discord.Activity]) -> str:
@@ -153,6 +159,7 @@ class DiscordCog(commands.Cog):
     @commands.command(name="reminder", aliases=["remindme"])
     @commands.guild_only()
     async def add_reminder(self, ctx: commands.Context, *args):
+        # Add reminder to cache, which is read by the reminder loop
         raise NotImplementedError
 
     @commands.command(name="roll", aliases=["dice", "die"])
@@ -211,8 +218,19 @@ class DiscordCog(commands.Cog):
     async def get_all_commands(self, ctx: commands.Context):
         raise NotImplementedError
 
-#     TODO: Mod commands and settings commands here?
+    async def run_reminder(self):
+        reminder_file = "Data files/reminders.json"
+        num_deprecated = 0
+
+        with open(reminder_file, "r") as reminders_file:
+            serialized_reminders = json.load(reminders_file)
+
+        # Load serialized reminders into the cache
+        for reminder_ts, reminder in serialized_reminders.items():
+            self.reminder_cache[reminder_ts] = reminder
+
+        # Loop and read cache
 
 
-def setup(bot: discord.ext.commands.Bot):
+def setup(bot: commands.Bot):
     bot.add_cog(DiscordCog(bot))

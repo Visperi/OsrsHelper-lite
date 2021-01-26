@@ -90,17 +90,47 @@ class CovidFiParser:
                              "ongoing request or other similar issues.")
         return self.__corona_data, self.__hospitalised_data, self.__vaccination_data
 
-    async def get_summarized_data(self) -> Tuple[dict, dict, dict, dict]:
+    async def get_summarized_data(self) -> dict:
         """
-        Get summarized corona data, hospitalized data and vaccination data based on the latest data synchronization.
-        The corona data contains the amount of confirmed cases and deaths, and the health care
-        district for the latest report in both categories.
-        Hospitalized data contains the amount of people requiring health care services. They are categorized into
-        categories in ward, in ICU and total.
-        Vaccination data contains the amount of vaccinations in whole area of Finland.
+        Get summarized corona data, hospitalized data, vaccination data and daily cases in whole Finland area
+        based on the latest data synchronization. The returned data is in format:
 
-        :return: Tuple of summarized data, where the data is in order (corona_data, hospitalized, vaccinations)
+        {
+            "corona_data": {
+                              "confirmed": {
+                                              "count": int,
+                                              "area": (str) last case health care district,
+                                              "last_case": (str) last case UTC timestamp
+                                            },
+                              "deaths": {
+                                           "count": int,
+                                           "area": str,
+                                           "last_case": str
+                                        }
+                           },
+            "hospitalised_data": {
+                                    "totalHospitalised": int,
+                                    "inWard": int,
+                                    "inIcu": int
+                                  },
+            "shots_data": {
+                             "area": (str) Finland,
+                             "date": (str) UTC timestamp for data update,
+                             "shots": (int) Total shots in Finland
+                          },
+            "daily_cases": {
+                              "confirmed": int,
+                              "deaths": int,
+                              "totalHospitalised": int,
+                              "inWard": int,
+                              "inIcu": int,
+                              "shots": int
+                           }
+        }
+
+        :return: Summarized data in dictionary
         """
+
         raw_data = await self.get_raw_data()
         corona_data = raw_data[0]
         hospitalised_data = raw_data[1]
@@ -122,7 +152,10 @@ class CovidFiParser:
         last_case = corona_data["deaths"][-1]
         summarized_corona["deaths"]["last_case"] = last_case
 
-        return summarized_corona, summarized_hospital, summarized_vaccination, self.__daily_cases
+        summarized_dict = dict(corona_data=summarized_corona, hospitalised_data=summarized_hospital,
+                               shots_data=summarized_vaccination, daily_cases=self.__daily_cases)
+
+        return summarized_dict
 
     def __update_daily_cases(self) -> None:
         """
@@ -153,7 +186,7 @@ class CovidFiParser:
         :param data: List of dictionaries containing data from different dates
         :param data_key: Root level dictionary key for given values. Giving this attribute indicates that the data is
                          in such form that all entries should be looped through, and then after comparing dates the
-                         value in daily_cases incremented. (see the corona data url)
+                         value in daily_cases incremented. (see the corona data url for sample structure)
         """
         if len(data) < 2:
             return
@@ -181,7 +214,6 @@ class CovidFiParser:
         data is requested. The data is updated only a few times in a day, so frequent updating is not needed.
         """
         failed_updates = 0
-        cooldown_min = self.cooldown * 60
         async with self.__client_session as session:
             while True:
                 self.update_in_progress = True
@@ -208,9 +240,10 @@ class CovidFiParser:
                         await asyncio.sleep(30)
                         continue
                     else:
-                        print(f"Failed to update cache 3 times in a row. Taking the usual {cooldown_min} minute break.")
+                        print(f"Failed to update cache 3 times in a row. Taking the usual {self.cooldown} minute "
+                              f"break.")
 
-                await asyncio.sleep(cooldown_min)
+                await asyncio.sleep(self.cooldown * 60)
 
 
 if __name__ == '__main__':

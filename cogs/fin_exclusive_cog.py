@@ -117,7 +117,7 @@ class FinExclusiveCog(commands.Cog):
         """
 
         try:
-            data = await self.covid_parser.get_summarized_data()
+            summarized_data = await self.covid_parser.get_summarized_data()
         except ValueError:
             await ctx.send("Dataa ei ole vielä päivitetty. Yritä hetken kuluttua uudelleen.")
             return
@@ -131,10 +131,10 @@ class FinExclusiveCog(commands.Cog):
         else:
             embed.set_footer(text=f"Data päivitetty viimeksi: {update_ts}")
 
-        corona_data = data[0]
-        hospital_data = data[1]
-        vaccination_data = data[2]
-        daily_cases = data[3].copy()
+        corona_data = summarized_data["corona_data"]
+        hospital_data = summarized_data["hospitalised_data"]
+        vaccination_data = summarized_data["shots_data"]
+        daily_cases = summarized_data["daily_cases"].copy()
         daily_cases_formatted = self.__format_daily_differences(daily_cases)
 
         daily_confirmed = daily_cases_formatted["confirmed"]

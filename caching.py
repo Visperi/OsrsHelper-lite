@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView, Iterable
+from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView, Iterable, Optional
 from collections.abc import MutableMapping
 import datetime
 
@@ -53,7 +53,7 @@ class Cache(MutableMapping):
     values are returned instead unless specific collection commands are used.
     """
 
-    def __init__(self, name: str = None, allow_type_override: bool = True):
+    def __init__(self, name: Optional[str] = None, allow_type_override: bool = True):
         """
         :param name: Optional name for the cache.
         :param allow_type_override: If True, values stored into cache can be any type. If false, trying to overwrite
@@ -85,7 +85,7 @@ class Cache(MutableMapping):
         try:
             existing = self[cache_key]
             if type(existing) != type(value):
-                raise TypeError(f"Different type of cache item already owns key \"{cache_key}\" (expected "
+                raise TypeError(f"Different type of cache item already has key \"{cache_key}\" (expected "
                                 f"type {type(existing)}, got type {type(value)}")
         except KeyError:
             self.__cache[cache_key] = new_item
@@ -147,7 +147,7 @@ class Cache(MutableMapping):
         """
         self.__cache.clear()
 
-    def get(self, cache_key: Any, default=None) -> Any:
+    def get(self, cache_key: Any, default: Optional[Any] = None) -> Any:
         """
         Get a cache item. If not found, return the default value instead.
 
@@ -192,7 +192,7 @@ class Cache(MutableMapping):
         """
         self.item_lifetime = None
 
-    def add(self, value: Any, cache_key: Any = None):
+    def add(self, value: Any, cache_key: Optional[Any] = None):
         """
         Add an item into cache. Available to offer a way to call this operation just by giving the cached item. If no
         cache key is given, str() method for the item is called and the return value used as key.

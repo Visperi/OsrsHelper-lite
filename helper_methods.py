@@ -78,19 +78,28 @@ def titlecase(original: str, delimiter: str = " ", small_words: list = None) -> 
 
 
 def parse_wiki_search_candidates(search_result: str, base_url: str, cache: Cache = None) -> list:
+    """
+    Parse potential matches for a wiki search in a "Did you mean?" manner. Supports the official osrs wiki and
+    melvoridle wiki. If a cache object is passed, all wiki page urls found are added into it so they can be found
+
+    :param search_result:
+    :param base_url:
+    :param cache:
+    :return:
+    """
     num_search_candidates = 5
     hyperlinks_list = []
 
     results_html = BeautifulSoup(search_result, "html.parser")
     html_headings = results_html.findAll("div", class_="mw-search-result-heading")
 
-    for heading in html_headings[:num_search_candidates]:
+    for heading in html_headings:
         heading_a = heading.find("a")
         heading_link_end = heading_a["href"]
         heading_title = heading_a["title"]
         heading_link = f"{base_url}{heading_link_end}"
 
-        if cache and heading_link not in cache:
+        if cache is not None:
             cache.add(heading_link)
 
         if heading_link[-1] == ")":

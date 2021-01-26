@@ -25,6 +25,7 @@ SOFTWARE.
 import aiohttp
 import discord
 from discord.ext import commands
+from caching import Cache
 
 
 class OsrsHelper(commands.Bot):
@@ -44,7 +45,8 @@ class OsrsHelper(commands.Bot):
 
         self.reminder_loop_running = False
         self.aiohttp_session = aiohttp.ClientSession(loop=self.loop)
-        self.caches = {}
+        self.mwiki_cache = Cache("mwiki")
+        self.wiki_cache = Cache("wiki")
 
     async def fetch_url(self, url: str) -> str:
         if url is None:
