@@ -221,15 +221,50 @@ class DiscordCog(commands.Cog):
     async def run_reminder(self):
         reminder_file = "Data files/reminders.json"
         num_deprecated = 0
+        unserialized_loops = 0
 
         with open(reminder_file, "r") as reminders_file:
             serialized_reminders = json.load(reminders_file)
 
+        start_time = datetime.datetime.utcnow().timestamp()
         # Load serialized reminders into the cache
-        for reminder_ts, reminder in serialized_reminders.items():
-            self.reminder_cache[reminder_ts] = reminder
+        # They are in format {ts: [reminder, ...], ts2: [reminder, ...]}
+        for reminder_ts in serialized_reminders.keys():
+            reminders = serialized_reminders.pop(reminder_ts)
+            # Skip already passed reminders
+            if int(reminder_ts) > int(start_time):
+                self.reminder_cache[int(reminder_ts)] = reminders
+            else:
+                num_deprecated += 1
+
+        print(f"Skipped {num_deprecated} deprecated reminders.")
 
         # Loop and read cache
+        while True:
+            utc_ts = int(datetime.datetime.utcnow().timestamp())
+
+            try:
+                reminder_list = self.reminder_cache.pop(utc_ts)
+            except KeyError:
+                await asyncio.sleep(1)
+                continue
+
+            for reminder in reminder_list:
+                channel = await self.bot.get_channel(reminder["channel"])
+                author = await self.bot.get_user(reminder["author"])
+                message = reminder["message"]
+                await channel.send(f"{author.mention} {message}")
+
+            unserialized_loops += 1
+            if unserialized_loops == 3600:
+                unserialized_loops = 0
+                await self.serialize_reminders()
+
+            await asyncio.sleep(1)
+
+    async def serialize_reminders(self):
+        # TODO: Should this be as a serializing method inside cahcing?
+        raise NotImplementedError
 
 
 def setup(bot: commands.Bot):
