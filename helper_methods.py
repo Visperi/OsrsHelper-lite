@@ -28,6 +28,7 @@ import dateutil.parser
 from caching import Cache
 from typing import Union
 from bs4 import BeautifulSoup
+from dateutil.relativedelta import relativedelta
 
 tz_fi = pytz.timezone("Europe/Helsinki")
 
@@ -87,7 +88,6 @@ def parse_wiki_search_candidates(search_result: str, base_url: str, cache: Cache
     :param cache:
     :return:
     """
-    num_search_candidates = 5
     hyperlinks_list = []
 
     results_html = BeautifulSoup(search_result, "html.parser")
@@ -111,6 +111,60 @@ def parse_wiki_search_candidates(search_result: str, base_url: str, cache: Cache
         hyperlinks_list.append(hyperlink)
 
     return hyperlinks_list
+
+
+def parse_message(string: str):
+    return string.replace("\\\\n", "n").replace("\\n", "\n")
+
+
+def string_to_timedelta(time_string: str) -> relativedelta:
+    """
+    Convert string from format '[years][months][days][hours][minutes][seconds]' to relativedelta object. Any time unit
+    can be left out if not needed.
+    :param time_string: Relative time in string format
+    :return: datetutil.relativedelta.relativedelta object
+    """
+
+    replace_dict = {"years": "yrs",
+                    "yrs": "y",
+                    "months": "mon",
+                    "mon": "m",
+                    "days": "d",
+                    "hours": "H",
+                    "h": "H",
+                    "minutes": "min",
+                    "min": "M",
+                    "seconds": "sec",
+                    "sec": "S",
+                    "s": "S",
+                    " ": ""}
+
+    for old in replace_dict.keys():
+        new = replace_dict[old]
+        time_string = time_string.replace(old, new)
+
+    time_units = {"y": 0, "m": 0, "d": 0, "H": 0, "M": 0, "S": 0}
+
+    # Extract all different time units from string
+    for char in time_string:
+        if char not in list(time_units):
+            if not char.isdigit():
+                raise ValueError("Invalid character in timedelta string.")
+            continue
+
+        char_idx = time_string.find(char)
+        time_units[char] = int(time_string[:char_idx])
+
+        target_substring = time_string[:char_idx + 1]
+        time_string = time_string.replace(target_substring, "")
+
+    timedelta = relativedelta(years=time_units["y"],
+                              months=time_units["m"],
+                              days=time_units["d"],
+                              hours=time_units["H"],
+                              minutes=time_units["M"],
+                              seconds=time_units["S"])
+    return timedelta
 
 
 if __name__ == '__main__':

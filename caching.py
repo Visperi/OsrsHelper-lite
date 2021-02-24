@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView, Iterable, Optional
+from typing import Union, Any, Dict, Tuple, ItemsView, KeysView, ValuesView, Iterable, Optional, Callable
 from collections.abc import MutableMapping
 import datetime
 
@@ -32,8 +32,9 @@ class CacheItem:
     Encapsulates the actual value and some extra internal values for items stored into Cache.
     """
 
-    def __init__(self, value: Any):
+    def __init__(self, key: Any, value: Any):
         self.last_hit = datetime.datetime.utcnow()
+        self.key = key
         self.value = value
         self.total_hits = 0
 
@@ -76,7 +77,7 @@ class Cache(MutableMapping):
         return cache_item.value
 
     def __setitem__(self, cache_key: Any, value: Any):
-        new_item = CacheItem(value)
+        new_item = CacheItem(cache_key, value)
         if self.allow_type_override:
             self.__cache[cache_key] = new_item
             return
@@ -251,6 +252,24 @@ class Cache(MutableMapping):
         tmp = {}
         for cache_key, cache_item in self.items():
             if cache_item.total_hits >= hits_limit:
+                tmp[cache_key] = cache_item
+
+        deleted_items = len(self) - len(tmp)
+        self.__cache = tmp
+        return deleted_items
+
+    def delete_delegated(self, delete_check: Callable) -> int:
+        """
+        Delete cache items based on return value of an external check function.
+        This function must take the cache items as the only positional arguments, and it must return True/False values.
+        If the delegate function returns True, the cache item will be deleted.
+
+        :param delete_check: Method that returns True for CacheItem objects that should be deleted
+        :return: Number of deleted items
+        """
+        tmp = {}
+        for cache_key, cache_item in self.items():
+            if delete_check(cache_item) is True:
                 tmp[cache_key] = cache_item
 
         deleted_items = len(self) - len(tmp)

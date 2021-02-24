@@ -45,10 +45,10 @@ class EBotVersion(Enum):
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Say !help"))
-    print("Logged in as:")
-    print(bot.user.name)
-    print(bot.user.id)
-    print("------")
+    print("Bot is now online.")
+    print(f"Username: {bot.user.name}")
+    print(f"Id: {bot.user.id}")
+    print("_" * 30)
     # on_ready is not guaranteed to execute only once so a check is needed to guarantee only one reminder loop
 
 

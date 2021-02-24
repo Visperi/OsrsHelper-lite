@@ -79,6 +79,10 @@ class CovidFiParser:
                 resp.raise_for_status()
             return await resp.json()
 
+    @staticmethod
+    def log(msg: str):
+        print(f"[Covid parser] {msg}")
+
     async def get_raw_data(self) -> Tuple[dict, dict, dict]:
         """
         Get the raw data of both corona data and hospitalized data. This data contains all information that the
@@ -215,6 +219,7 @@ class CovidFiParser:
         """
         failed_updates = 0
         async with self.__client_session as session:
+            self.log("Covid parser started.")
             while True:
                 self.update_in_progress = True
                 try:
@@ -231,16 +236,16 @@ class CovidFiParser:
                     failed_updates = 0
                 except Exception as e:
                     self.update_in_progress = False
-                    print(f"Exception during cache update.")
+                    self.log(f"Exception during cache update.")
                     traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
                     failed_updates += 1
 
                     if failed_updates < 3:
-                        print("Trying to update again in 30 seconds.")
+                        self.log("Trying to update again in 30 seconds.")
                         await asyncio.sleep(30)
                         continue
                     else:
-                        print(f"Failed to update cache 3 times in a row. Taking the usual {self.cooldown} minute "
+                        self.log(f"Failed to update cache 3 times in a row. Taking the usual {self.cooldown} minute "
                               f"break.")
 
                 await asyncio.sleep(self.cooldown * 60)

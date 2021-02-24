@@ -29,9 +29,7 @@ import datetime
 import platform
 import random
 import os
-from caching import Cache
-import json
-import asyncio
+from reminder import Reminder
 from typing import Union
 from mathparse import mathparse
 
@@ -40,9 +38,8 @@ class DiscordCog(commands.Cog):
 
     def __init__(self, bot: commands.bot):
         self.bot = bot
-        self.reminder_cache = Cache("reminders")
-        self.reminder_cache.set_item_lifetime(seconds=1)
-        self.run_reminder()
+        self.reminder = Reminder(bot, bot.loop)
+        self.reminder.start()
 
     @staticmethod
     def fetch_user_activity(activity: Union[discord.BaseActivity, discord.Spotify, discord.Activity]) -> str:
@@ -65,6 +62,9 @@ class DiscordCog(commands.Cog):
             _activity = f"{_type} {name}\n{activity.state}"
 
         return _activity
+
+    def serialize(self):
+        self.reminder.serialize()
 
     @commands.command(name="info", aliases=["version"])
     async def get_bot_info(self, ctx: commands.Context):
@@ -158,9 +158,38 @@ class DiscordCog(commands.Cog):
 
     @commands.command(name="reminder", aliases=["remindme"])
     @commands.guild_only()
-    async def add_reminder(self, ctx: commands.Context, *args):
-        # Add reminder to cache, which is read by the reminder loop
-        raise NotImplementedError
+    async def add_reminder(self, ctx: commands.Context, *, msg: str):
+        timer_minimum_value = 10
+        beg_quote_i = msg.find("\"")
+        end_quote_i = msg.rfind("\"")
+
+        if beg_quote_i < 2:
+            await ctx.send("This command requires both reminder timer and message.")
+            return
+        elif beg_quote_i == end_quote_i:
+            await ctx.send("The reminder message must be quoted.")
+            return
+
+        raw_reminder_timer = msg[:beg_quote_i].rstrip()
+        raw_reminder_message = msg[beg_quote_i+1:end_quote_i]
+        try:
+            reminder_timer = helper_methods.string_to_timedelta(raw_reminder_timer)
+        except ValueError:
+            await ctx.send("Reminder timer was not in supported format.")
+            return
+        reminder_message = helper_methods.parse_message(raw_reminder_message)
+        if len(reminder_message) == 0:
+            await ctx.send("The reminder message can not be empty.")
+            return
+
+        if reminder_timer.seconds < timer_minimum_value:
+            await ctx.send(f"The reminder timer must be at least {timer_minimum_value} seconds.")
+            return
+
+        future_ts = (datetime.datetime.utcnow() + reminder_timer).timestamp()
+        self.reminder.add(int(future_ts), ctx.author.id, ctx.channel.id, reminder_message)
+        formatted_ts = datetime.datetime.fromtimestamp(future_ts).replace(microsecond=0)
+        await ctx.send(f"Reminder set to {formatted_ts} UTC.")
 
     @commands.command(name="roll", aliases=["dice", "die"])
     async def roll_die(self, ctx: commands.Context, dice_options: Union[str, int] = 6):
@@ -216,54 +245,6 @@ class DiscordCog(commands.Cog):
 
     @commands.command("commands")
     async def get_all_commands(self, ctx: commands.Context):
-        raise NotImplementedError
-
-    async def run_reminder(self):
-        reminder_file = "Data files/reminders.json"
-        num_deprecated = 0
-        unserialized_loops = 0
-
-        with open(reminder_file, "r") as reminders_file:
-            serialized_reminders = json.load(reminders_file)
-
-        start_time = datetime.datetime.utcnow().timestamp()
-        # Load serialized reminders into the cache
-        # They are in format {ts: [reminder, ...], ts2: [reminder, ...]}
-        for reminder_ts in serialized_reminders.keys():
-            reminders = serialized_reminders.pop(reminder_ts)
-            # Skip already passed reminders
-            if int(reminder_ts) > int(start_time):
-                self.reminder_cache[int(reminder_ts)] = reminders
-            else:
-                num_deprecated += 1
-
-        print(f"Skipped {num_deprecated} deprecated reminders.")
-
-        # Loop and read cache
-        while True:
-            utc_ts = int(datetime.datetime.utcnow().timestamp())
-
-            try:
-                reminder_list = self.reminder_cache.pop(utc_ts)
-            except KeyError:
-                await asyncio.sleep(1)
-                continue
-
-            for reminder in reminder_list:
-                channel = await self.bot.get_channel(reminder["channel"])
-                author = await self.bot.get_user(reminder["author"])
-                message = reminder["message"]
-                await channel.send(f"{author.mention} {message}")
-
-            unserialized_loops += 1
-            if unserialized_loops == 3600:
-                unserialized_loops = 0
-                await self.serialize_reminders()
-
-            await asyncio.sleep(1)
-
-    async def serialize_reminders(self):
-        # TODO: Should this be as a serializing method inside cahcing?
         raise NotImplementedError
 
 

@@ -30,8 +30,10 @@ class MaintenanceCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(name="extension")
-    @commands.is_owner()
+    async def cog_check(self, ctx: commands.Context) -> bool:
+        return await self.bot.is_owner(ctx.author)
+
+    @commands.command(name="extension", aliases=["cog"])
     async def manage_extensions(self, ctx: commands.Context, *args):
         """
         Load, unload or reload an extension. Currently supports only cogs, which names must end with _cog.
@@ -57,6 +59,8 @@ class MaintenanceCog(commands.Cog):
                            f"and `reload`.")
             return
 
+        if extension_namespace == "cogs.discord_cog":
+            await self.serialize_cog(ctx)
         try:
             method(extension_namespace)
             await ctx.send(f"Successfully {operation}ed extension `{extension_namespace}`.")
@@ -70,34 +74,56 @@ class MaintenanceCog(commands.Cog):
             await ctx.send(f"Extension `{extension_namespace}` is not loaded. Please ensure the full "
                            f"extension namespace was given.")
 
+    @commands.command(name="serialize", aliases=["backup"])
+    async def serialize_cog(self, ctx: commands.Context, *cog_name):
+        if len(cog_name) == 0:
+            cog_name = "DiscordCog"
+
+        cog = self.bot.get_cog(cog_name)
+        if cog is None:
+            await ctx.send(f"Cog with name `{cog_name}` is not loaded.")
+            return
+
+        try:
+            cog.serialize()
+        except AttributeError:
+            await ctx.send(f"Cog `{cog_name}` does not have method `serialize()`.")
+            return
+
+        await ctx.send("Cog data serialized.")
+
+    @commands.command(name="extensions")
+    async def get_loaded_extensions(self, ctx: commands.Context):
+        loaded_extensions = [f"`{name}`" for name in self.bot.extensions]
+        await ctx.send("Currently loaded extensions:\n" + "\n".join(loaded_extensions))
+
+    @commands.command(name="cogs")
+    async def get_loaded_cogs(self, ctx: commands.Context):
+        loaded_cogs = [f"`{name}`" for name in self.bot.cogs]
+        await ctx.send("Currently loaded cogs:\n" + "\n".join(loaded_cogs))
+
     @commands.command(name="id")
-    @commands.is_owner()
     async def get_item_id(self, ctx: commands.Context, *, item_name: str):
         raise NotImplementedError
 
     @commands.command(name="check")
-    @commands.is_owner()
     async def check_new_items(self, ctx: commands.Context):
         # TODO: Caching???
         raise NotImplementedError
 
     @commands.command(name="get")
-    @commands.is_owner()
     async def get_file(self, ctx: commands.Context, filename: str):
         raise NotImplementedError
 
     @commands.command("managedrinks")
-    @commands.is_owner()
     async def manage_drinks(self, ctx: commands.Context):
         raise NotImplementedError
 
     @commands.command("clear")
-    @commands.is_owner()
     async def clear_cache(self, ctx: commands.Context, cache_name: str):
         raise NotImplementedError
 
     @commands.command("devcommands")
-    @commands.is_owner()
     async def get_maintenance_commands(self, ctx: commands.Context):
         raise NotImplementedError
 

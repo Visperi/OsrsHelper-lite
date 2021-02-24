@@ -74,6 +74,14 @@ class ErrorHandlerCog(commands.Cog):
             await ctx.send("You need more roles to execute this command.")
             return
 
+        elif isinstance(error, commands.ExpectedClosingQuoteError):
+            await ctx.send("Quotes must be closed for this command.")
+            return
+
+        elif isinstance(error, commands.CheckFailure):
+            await ctx.send("You do not have permissions to execute this command.")
+            return
+
         elif isinstance(error, NotImplementedError):
             await ctx.send("Sorry, this command has not been implemented yet :(")
             return

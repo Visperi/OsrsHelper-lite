@@ -66,7 +66,7 @@ class MelvoridleCog(commands.Cog):
                 return
 
             candidates = helper_methods.parse_wiki_search_candidates(response, base_url)
-            embed = discord.Embed(title="Did you mean", description="\n".join(candidates))
+            embed = discord.Embed(title="Did you mean", description="\n".join(candidates[:5]))
             await ctx.send(embed=embed)
 
 
