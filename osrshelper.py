@@ -40,8 +40,10 @@ class OsrsHelper(commands.Bot):
         __intents = discord.Intents.default()
         __intents.members = True
         __intents.presences = True
-        super().__init__(command_prefix=command_prefix, intents=__intents, **options)
+        super().__init__(command_prefix=command_prefix, intents=__intents, activity=discord.Game(name="Say !help"),
+                         **options)
         self.remove_command("help")
+        self.on_ready_called = False
 
         self.reminder_loop_running = False
         self.aiohttp_session = aiohttp.ClientSession(loop=self.loop)

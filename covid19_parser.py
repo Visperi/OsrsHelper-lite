@@ -44,10 +44,11 @@ class __UrlContainer:
 urls = __UrlContainer()
 
 
-class CovidFiParser:
+class CovidParser:
 
     def __init__(self, loop: asyncio.BaseEventLoop = asyncio.get_event_loop()):
         self._local_tz = pytz.timezone("Europe/Helsinki")
+        self.__name = type(self).__name__
         self.__client_session = aiohttp.ClientSession(loop=loop)
         self.update_in_progress = False
 
@@ -79,9 +80,8 @@ class CovidFiParser:
                 resp.raise_for_status()
             return await resp.json()
 
-    @staticmethod
-    def log(msg: str):
-        print(f"[Covid parser] {msg}")
+    def __log(self, msg: str):
+        print(f"[{self.__name}] {msg}")
 
     async def get_raw_data(self) -> Tuple[dict, dict, dict]:
         """
@@ -219,7 +219,7 @@ class CovidFiParser:
         """
         failed_updates = 0
         async with self.__client_session as session:
-            self.log("Covid parser started.")
+            self.__log("Covid parser started.")
             while True:
                 self.update_in_progress = True
                 try:
@@ -236,16 +236,16 @@ class CovidFiParser:
                     failed_updates = 0
                 except Exception as e:
                     self.update_in_progress = False
-                    self.log(f"Exception during cache update.")
+                    self.__log(f"Exception during cache update.")
                     traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
                     failed_updates += 1
 
                     if failed_updates < 3:
-                        self.log("Trying to update again in 30 seconds.")
+                        self.__log("Trying to update again in 30 seconds.")
                         await asyncio.sleep(30)
                         continue
                     else:
-                        self.log(f"Failed to update cache 3 times in a row. Taking the usual {self.cooldown} minute "
+                        self.__log(f"Failed to update cache 3 times in a row. Taking the usual {self.cooldown} minute "
                               f"break.")
 
                 await asyncio.sleep(self.cooldown * 60)

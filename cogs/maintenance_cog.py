@@ -33,6 +33,9 @@ class MaintenanceCog(commands.Cog):
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await self.bot.is_owner(ctx.author)
 
+    def __log(self, msg: str):
+        print(f"[{self.qualified_name}] {msg}")
+
     @commands.command(name="extension", aliases=["cog"])
     async def manage_extensions(self, ctx: commands.Context, *args):
         """
@@ -60,7 +63,7 @@ class MaintenanceCog(commands.Cog):
             return
 
         if extension_namespace == "cogs.discord_cog":
-            await self.serialize_cog(ctx)
+            await self.serialize_cog(ctx, "DiscordCog")
         try:
             method(extension_namespace)
             await ctx.send(f"Successfully {operation}ed extension `{extension_namespace}`.")
@@ -74,31 +77,41 @@ class MaintenanceCog(commands.Cog):
             await ctx.send(f"Extension `{extension_namespace}` is not loaded. Please ensure the full "
                            f"extension namespace was given.")
 
-    @commands.command(name="serialize", aliases=["backup"])
-    async def serialize_cog(self, ctx: commands.Context, *cog_name):
-        if len(cog_name) == 0:
-            cog_name = "DiscordCog"
-
+    @commands.command(name="serialize")
+    async def serialize_cog(self, ctx: commands.Context, cog_name: str):
+        """
+        Serialize cog contents into a file. The cog must have a public serialize() method without positional arguments.
+        :param ctx: Discord context
+        :param cog_name: Cog class name. This is used to get it from loaded cogs.
+        """
         cog = self.bot.get_cog(cog_name)
         if cog is None:
-            await ctx.send(f"Cog with name `{cog_name}` is not loaded.")
+            await ctx.send(f"Cog with name `{cog_name}` is not loaded. Cog names are case sensitive.")
             return
 
         try:
             cog.serialize()
         except AttributeError:
-            await ctx.send(f"Cog `{cog_name}` does not have method `serialize()`.")
+            await ctx.send(f"Cog `{cog_name}` does not have method `serialize()` or it requires positional arguments.")
             return
 
-        await ctx.send("Cog data serialized.")
+        self.__log(f"Cog {cog_name} serialized.")
+        if ctx.invoked_with == "serialize":
+            await ctx.send(f"Cog `{cog_name}` serialized.")
 
     @commands.command(name="extensions")
     async def get_loaded_extensions(self, ctx: commands.Context):
+        """
+        Get currently loaded bot extensions.
+        """
         loaded_extensions = [f"`{name}`" for name in self.bot.extensions]
         await ctx.send("Currently loaded extensions:\n" + "\n".join(loaded_extensions))
 
     @commands.command(name="cogs")
     async def get_loaded_cogs(self, ctx: commands.Context):
+        """
+        Get currently loaded cogs.
+        """
         loaded_cogs = [f"`{name}`" for name in self.bot.cogs]
         await ctx.send("Currently loaded cogs:\n" + "\n".join(loaded_cogs))
 

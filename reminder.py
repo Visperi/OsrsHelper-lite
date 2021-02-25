@@ -44,6 +44,7 @@ class Reminder:
         :param serialize_path: Path to a file where reminders can be serialized to
         :param backup_threshold: Number of rounds after which the reminders are serialized into file in serialize_path
         """
+        self.__name = type(self).__name__
         self.__loop_task: Union[asyncio.tasks.Task, None] = None
         self.bot = bot
         self.cache = cache
@@ -51,9 +52,9 @@ class Reminder:
         self.loop = loop
         self.backup_threshold = backup_threshold
 
-    @staticmethod
-    def __log(msg: str):
-        print(f"[Reminder] {msg}")
+    # @staticmethod
+    def __log(self, msg: str):
+        print(f"[{self.__name}] {msg}")
 
     @staticmethod
     def __cache_delete_check(cache_item: caching.CacheItem):
@@ -97,15 +98,23 @@ class Reminder:
     def delete(self):
         raise NotImplementedError
 
-    def stop(self):
+    def stop(self) -> None:
+        """
+        Stop a reminder loop.
+        :raises ValueError: If no loop is running for executing instance.
+        """
         if self.__loop_task is None:
             raise ValueError("No loop running for this Reminder instance.")
-        
+
         self.__loop_task.cancel()
         self.__log("Reminder loop stopped.")
         self.__loop_task = None
 
     def start(self) -> None:
+        """
+        Start a reminder loop.
+        :raises ValueError: If a reminder loop is already running for executing instance.
+        """
         if self.__loop_task is not None:
             raise ValueError("Reminder loop is already running for this Reminder instance.")
 

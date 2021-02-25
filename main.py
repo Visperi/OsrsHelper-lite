@@ -44,16 +44,16 @@ class EBotVersion(Enum):
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(name="Say !help"))
-    print("Bot is now online.")
-    print(f"Username: {bot.user.name}")
-    print(f"Id: {bot.user.id}")
-    print("_" * 30)
-    # on_ready is not guaranteed to execute only once so a check is needed to guarantee only one reminder loop
+    if not bot.on_ready_called:
+        print("Bot is now online.")
+        print(f"Username: {bot.user.name}")
+        print(f"Id: {bot.user.id}")
+        print("_" * 30)
+        bot.on_ready_called = True
 
 
 # noinspection PyBroadException
-def run(bot_version: EBotVersion):
+def start(bot_version: EBotVersion):
     with open("Data files/credentials.json", "r") as credential_file:
         credential_data = json.load(credential_file)
 
@@ -75,4 +75,4 @@ def run(bot_version: EBotVersion):
 
 
 if __name__ == "__main__":
-    run(EBotVersion.development)
+    start(EBotVersion.development)

@@ -34,7 +34,7 @@ class FinExclusiveCog(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.covid_parser = covid19_parser.CovidFiParser(loop=bot.loop)
+        self.covid_parser = covid19_parser.CovidParser(loop=bot.loop)
 
     @commands.command(name="satokausi")
     async def satokausi(self, ctx: commands.Context, *args):
