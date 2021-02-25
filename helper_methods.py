@@ -56,21 +56,20 @@ def titlecase(original: str, delimiter: str = " ", small_words: list = None) -> 
     after apostrophe characters.
 
     :param original: Original string that is titlecased.
-    :param delimiter: Delimiter to separate the words in string. Result is joined with same delimiter.
-    :param small_words: Words that are skipped for capitalization. If given, collisions are eliminated with default
-                        small words.
+    :param delimiter: Word delimiter in string. Result is joined with same delimiter. Default is space.
+    :param small_words: Words skipped for capitalization. If given, collisions with default ones are eliminated.
     :return:
     """
-    small_words_ = ["of", "in", "at", "to", "the", "on", "an", "a"]
+    _small_words = ["of", "in", "at", "to", "the", "on", "an", "a"]
     if small_words:
-        list(set(small_words_ + small_words))
+        _small_words = list(set(_small_words + small_words))
 
     original_splitted = original.split(delimiter)
     result = []
 
     for word in original_splitted:
         word = word.lower()
-        if word in small_words_:
+        if word in _small_words:
             result.append(word)
         else:
             result.append(word.capitalize())
