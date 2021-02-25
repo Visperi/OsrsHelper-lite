@@ -2,7 +2,7 @@ import random
 import string
 import unittest
 import time
-from caching import Cache
+from caching import Cache, CacheItem
 
 
 class CacheTesting(unittest.TestCase):
@@ -187,6 +187,23 @@ class CacheTesting(unittest.TestCase):
         deleted = cache.delete_unpopular(2)
         self.assertEqual(deleted, 8)
         self.assertTrue(len(cache) == 2)
+
+    def test_delete_delegated(self):
+        cache = Cache()
+
+        def delete_item(cache_item: CacheItem):
+            return cache_item.key % 10 == 0 or cache_item.value % 25 == 0
+
+        for i in range(1, 101):
+            cache[i] = i
+
+        num_deleted = cache.delete_delegated(delete_item)
+        # Should be deleted: 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 25, 75 (10 based on keys, 2 based on values)
+        self.assertEqual(num_deleted, 10 + 2)
+
+        for key, value in cache.items():
+            cond = key % 10 != 0 and value.value % 25 != 0
+            self.assertTrue(cond)
 
 
 if __name__ == '__main__':

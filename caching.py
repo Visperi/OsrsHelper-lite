@@ -30,6 +30,12 @@ import datetime
 class CacheItem:
     """
     Encapsulates the actual value and some extra internal values for items stored into Cache.
+
+    Attributes:
+        last_hit    UTC datetime when this item was added into the cache (no requests) or last requested time
+        key         The cache key holding this item
+        value       The actual value this item is pointing to
+        total_hits  Number of times this item has been requested from cache. Zero if no requests after adding into cache
     """
 
     def __init__(self, key: Any, value: Any):
@@ -227,15 +233,15 @@ class Cache(MutableMapping):
         if not self.item_lifetime:
             return 0
 
-        tmp = {}
+        preserved_items = {}
         current_dt = datetime.datetime.utcnow()
         # Make a new dict of current cache contents which last hits are recent enough
         for cache_key, cache_item in self.items():
             if (current_dt - cache_item.last_hit).total_seconds() < self.item_lifetime:
-                tmp[cache_key] = cache_item
+                preserved_items[cache_key] = cache_item
 
-        deleted_items = len(self) - len(tmp)
-        self.__cache = tmp
+        deleted_items = len(self) - len(preserved_items)
+        self.__cache = preserved_items
         return deleted_items
 
     def delete_unpopular(self, hits_limit: int) -> int:
@@ -249,13 +255,13 @@ class Cache(MutableMapping):
         if hits_limit < 0:
             raise ValueError("Hits limit must be equal or greater than zero.")
 
-        tmp = {}
+        preserved_items = {}
         for cache_key, cache_item in self.items():
             if cache_item.total_hits >= hits_limit:
-                tmp[cache_key] = cache_item
+                preserved_items[cache_key] = cache_item
 
-        deleted_items = len(self) - len(tmp)
-        self.__cache = tmp
+        deleted_items = len(self) - len(preserved_items)
+        self.__cache = preserved_items
         return deleted_items
 
     def delete_delegated(self, delete_check: Callable) -> int:
@@ -267,11 +273,11 @@ class Cache(MutableMapping):
         :param delete_check: Method that returns True for CacheItem objects that should be deleted
         :return: Number of deleted items
         """
-        tmp = {}
+        preserved_items = {}
         for cache_key, cache_item in self.items():
-            if delete_check(cache_item) is True:
-                tmp[cache_key] = cache_item
+            if delete_check(cache_item) is False:
+                preserved_items[cache_key] = cache_item
 
-        deleted_items = len(self) - len(tmp)
-        self.__cache = tmp
+        deleted_items = len(self) - len(preserved_items)
+        self.__cache = preserved_items
         return deleted_items
