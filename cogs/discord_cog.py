@@ -182,7 +182,14 @@ class DiscordCog(commands.Cog):
             await ctx.send("The reminder message can not be empty.")
             return
 
-        if reminder_timer.seconds < timer_minimum_value:
+        ts_now = datetime.datetime.utcnow()
+        # Convert the reminder time from relativedelta to datetime.datetime object to get total seconds
+        try:
+            reminder_timer = ((ts_now + reminder_timer) - ts_now)
+        except OverflowError:
+            await ctx.send("Too long reminder timer.")
+            return
+        if reminder_timer.total_seconds() < timer_minimum_value:
             await ctx.send(f"The reminder timer must be at least {timer_minimum_value} seconds.")
             return
 
