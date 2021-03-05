@@ -25,7 +25,6 @@ SOFTWARE.
 import datetime
 import asyncio
 import json
-import traceback
 import caching
 from discord.ext import commands
 from typing import Union
@@ -52,21 +51,26 @@ class Reminder:
         self.loop = loop
         self.backup_threshold = backup_threshold
 
-    # @staticmethod
     def __log(self, msg: str):
         print(f"[{self.__name}] {msg}")
 
     @staticmethod
     def __cache_delete_check(cache_item: caching.CacheItem):
+        """
+        Check method for using Cache.delete_delegated method. Marks reminder to be deleted if its timestamp is in
+        the past.
+        :param cache_item: CacheItem object which timestamp is compared to current UTC timestamp
+        :return: True if the reminder timestamp is in the past
+        """
         return cache_item.key <= int(datetime.datetime.utcnow().timestamp())
 
-    def serialize(self, file: str = None) -> None:
+    def serialize(self, filepath: str = None) -> None:
         """
-        Serialize reminders in cache to json file
-        :param file: Path to a file. One is made if it does not already exist. None is serialize_path.
+        Serialize reminders in cache to json file. Creates a new file if one does not exist beforehand.
+        :param filepath: Path to a file. None value (default) is converted to self.serialize_path.
         """
-        if file is None:
-            file = self.serialize_path
+        if filepath is None:
+            filepath = self.serialize_path
 
         tmp = {}
         self.cache.delete_delegated(self.__cache_delete_check)
@@ -74,10 +78,18 @@ class Reminder:
         for timestamp, cache_item in self.cache.items():
             tmp[str(timestamp)] = cache_item.value
 
-        with open(file, "w", encoding="utf-8") as target_file:
+        with open(filepath, "w", encoding="utf-8") as target_file:
             json.dump(tmp, target_file, indent=4, ensure_ascii=False)
 
-    def deserialize(self, filepath: str):
+    def deserialize(self, filepath: str = None) -> None:
+        """
+        Deserialize reminders from a json file to reminder cache.
+        :param filepath: Path to a file containing serialized reminders. None value (default) is converted to
+                         self.serialize_path.
+        """
+        if filepath is None:
+            filepath = self.serialize_path
+
         with open(filepath, "r", encoding="utf-8") as serialized_file:
             serialized_reminders = json.load(serialized_file)
 
@@ -86,7 +98,9 @@ class Reminder:
         for timestamp, reminder_dict in serialized_reminders.items():
             self.cache[int(timestamp)] = reminder_dict
 
-        self.__log(f"Loaded {len(serialized_reminders)} reminders from serialized file.")
+        num_deleted = self.cache.delete_delegated(self.__cache_delete_check)
+        self.__log(f"Deleted {num_deleted} deprecated reminders.")
+        self.__log(f"Loaded {len(self.cache)} reminders from serialized file.")
 
     def add(self, timestamp: int, author_id: Union[int, str], channel_id: Union[int, str], message: str) -> None:
         """
@@ -131,14 +145,19 @@ class Reminder:
 
         try:
             self.deserialize(self.serialize_path)
-            num_deleted = self.cache.delete_delegated(self.__cache_delete_check)
-            self.__log(f"Deleted {num_deleted} deprecated reminders.")
         except FileNotFoundError:
             self.__log(f"File for serialized reminders does not exist. One is created automatically at serialization.")
 
         self.__loop_task = self.loop.create_task(self.__loop())
 
     async def __loop(self):
+        """
+        An infinite loop that checks the existing reminders in cache in intervals, and notifies reminder authors
+        with specified messages. Automatically serializes existing reminders into specified file after specified
+        number of cache checkup rounds.
+
+        start() and stop() methods can be used for controlling this loop.
+        """
         deserialized_loops = 0
 
         self.__log("Reminder loop started.")
