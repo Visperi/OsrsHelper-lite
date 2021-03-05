@@ -45,7 +45,6 @@ class OsrsHelper(commands.Bot):
         self.remove_command("help")
         self.on_ready_called = False
 
-        self.reminder_loop_running = False
         self.aiohttp_session = aiohttp.ClientSession(loop=self.loop)
         self.mwiki_cache = Cache("mwiki")
         self.wiki_cache = Cache("wiki")

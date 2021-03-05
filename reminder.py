@@ -77,6 +77,17 @@ class Reminder:
         with open(file, "w", encoding="utf-8") as target_file:
             json.dump(tmp, target_file, indent=4, ensure_ascii=False)
 
+    def deserialize(self, filepath: str):
+        with open(filepath, "r", encoding="utf-8") as serialized_file:
+            serialized_reminders = json.load(serialized_file)
+
+        # Load serialized reminders into the cache
+        # They are in format {ts: [reminder, ... , reminder_n], ts2: [reminder, ... , reminder_m], ...}
+        for timestamp, reminder_dict in serialized_reminders.items():
+            self.cache[int(timestamp)] = reminder_dict
+
+        self.__log(f"Loaded {len(serialized_reminders)} reminders from serialized file.")
+
     def add(self, timestamp: int, author_id: Union[int, str], channel_id: Union[int, str], message: str) -> None:
         """
         Add a reminder
@@ -118,23 +129,13 @@ class Reminder:
         if self.__loop_task is not None:
             raise ValueError("Reminder loop is already running for this Reminder instance.")
 
-        with open(self.serialize_path, "r", encoding="utf-8") as reminders_file:
-            try:
-                serialized_reminders = json.load(reminders_file)
-            except Exception as e:
-                traceback.print_exc(type(e), e, e.__traceback__)
-                self.__log("Failed to load serialized JSON reminders. Aborting...")
-                return
+        try:
+            self.deserialize(self.serialize_path)
+            num_deleted = self.cache.delete_delegated(self.__cache_delete_check)
+            self.__log(f"Deleted {num_deleted} deprecated reminders.")
+        except FileNotFoundError:
+            self.__log(f"File for serialized reminders does not exist. One is created automatically at serialization.")
 
-        # Load serialized reminders into the cache
-        # They are in format {ts: [reminder, ... , reminder_n], ts2: [reminder, ... , reminder_m], ...}
-        for timestamp in serialized_reminders.keys():
-            self.cache[int(timestamp)] = serialized_reminders[timestamp]
-
-        num_deprecated = self.cache.delete_delegated(self.__cache_delete_check)
-        self.__log(f"Deleted {num_deprecated} deprecated reminders.")
-        # Serialize remaining reminders back to file and start the loop
-        self.serialize()
         self.__loop_task = self.loop.create_task(self.__loop())
 
     async def __loop(self):
