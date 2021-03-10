@@ -231,6 +231,7 @@ class CovidParser:
                     self.__vaccination_data = results[2]
                     self.last_update_dt = datetime.datetime.utcnow()
                     # Daily cases calculation is very slow => do it in background thread
+                    # target method also switches the update in progress to False when ready
                     t = threading.Thread(target=self.__update_daily_cases, daemon=True)
                     t.start()
                     failed_updates = 0
